@@ -54,6 +54,11 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     // Layout
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
+    // 接收区和相关控件
+    QHBoxLayout *upLayout = new QHBoxLayout;
+    upLayout->addWidget(receiveTextEdit);
+
+    // 接收区侧边布局：串口配置、十六进制接收勾选框和连接按钮
     QFormLayout *settingsLayout = new QFormLayout;
     settingsLayout->addRow("Baud Rate:", baudRateComboBox);
     settingsLayout->addRow("Data Bits:", dataBitsComboBox);
@@ -61,22 +66,33 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     settingsLayout->addRow("Stop Bits:", stopBitsComboBox);
     settingsLayout->addRow("Flow Control:", flowControlComboBox);
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout;
-    buttonLayout->addWidget(connectButton); // 合并后的按钮
+    QVBoxLayout *receiveSideLayout = new QVBoxLayout;
+    receiveSideLayout->addLayout(settingsLayout);
+    receiveSideLayout->addWidget(hexReceiveCheckBox);
+    receiveSideLayout->addWidget(connectButton);
+    receiveSideLayout->addWidget(clearReceiveButton);
 
-    // 添加发送按钮和清空接收区按钮到布局
-    QHBoxLayout *sendClearLayout = new QHBoxLayout;
-    sendClearLayout->addWidget(sendButton);
-    sendClearLayout->addWidget(clearReceiveButton);
+    upLayout->addLayout(receiveSideLayout);
 
-    mainLayout->addLayout(settingsLayout);
-    mainLayout->addLayout(buttonLayout);
-    mainLayout->addWidget(receiveTextEdit);
-    mainLayout->addWidget(sendTextEdit);
-    mainLayout->addLayout(sendClearLayout);
-    mainLayout->addWidget(hexReceiveCheckBox);
-    mainLayout->addWidget(hexSendCheckBox);
-    mainLayout->addWidget(statusLabel); // 添加底部栏
+    // 发送区和相关控件
+    QHBoxLayout *downLayout = new QHBoxLayout;
+    downLayout->addWidget(sendTextEdit);
+
+    // 发送区侧边布局：十六进制发送勾选框和发送按钮
+    QVBoxLayout *sendSideLayout = new QVBoxLayout;
+    sendSideLayout->addWidget(hexSendCheckBox);
+    sendSideLayout->addWidget(sendButton);
+
+    downLayout->addLayout(sendSideLayout);
+
+    // 将左右布局添加到主布局
+    mainLayout->addLayout(upLayout);
+    mainLayout->addLayout(downLayout);
+
+    // 添加底部栏
+    QVBoxLayout *bottomLayout = new QVBoxLayout;
+    bottomLayout->addWidget(statusLabel);
+    mainLayout->addLayout(bottomLayout);
 
     loadcomSettings();
 
@@ -156,7 +172,7 @@ void SerialPortWidget::sendData()
                 sentBytes += data.size();
                 updateStatusLabel();
                 QDateTime currentDateTime = QDateTime::currentDateTime();
-                receiveTextEdit->append(currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz"));
+                receiveTextEdit->append("["+currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz")+"]");
                 receiveTextEdit->append("Sent: " + dataStr);
             }
         } else {
@@ -167,7 +183,7 @@ void SerialPortWidget::sendData()
                 sentBytes += data.size();
                 updateStatusLabel();
                 QDateTime currentDateTime = QDateTime::currentDateTime();
-                receiveTextEdit->append(currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz"));
+                receiveTextEdit->append("["+currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz")+"]");
                 receiveTextEdit->append("Sent: " + dataStr);
             }
         }
@@ -183,7 +199,7 @@ void SerialPortWidget::receiveData()
         receivedBytes += data.size();
         updateStatusLabel();
         QDateTime currentDateTime = QDateTime::currentDateTime();
-        receiveTextEdit->append(currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz"));
+        receiveTextEdit->append("["+currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz")+"]");
         if (hexReceiveCheckBox->isChecked()) {
             receiveTextEdit->append("Recv: " + data.toHex());
         } else {
