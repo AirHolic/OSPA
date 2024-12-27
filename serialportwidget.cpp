@@ -8,11 +8,12 @@
 #include <QCheckBox>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QLabel>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
-    : QWidget(parent), serialPort(nullptr), portName(portName)
+    : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0)
 {
-    //添加配置文件
+    // 添加配置文件
     settings = new QSettings("config.ini", QSettings::IniFormat);
 
     // Create UI elements
@@ -36,16 +37,19 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     flowControlComboBox = new QComboBox(this);
     flowControlComboBox->addItems({"None", "Hardware", "Software"});
 
-    connectButton = new QPushButton("Connect", this);
-    disconnectButton = new QPushButton("Disconnect", this);
-    disconnectButton->setEnabled(false);
+    connectButton = new QPushButton("Connect", this); // 合并连接和断开按钮
 
     hexReceiveCheckBox = new QCheckBox("HEX Receive", this);
     hexSendCheckBox = new QCheckBox("HEX Send", this);
 
-
     // 添加发送按钮
     sendButton = new QPushButton("Send", this);
+
+    // 添加清空接收区按钮
+    clearReceiveButton = new QPushButton("Clear Receive", this);
+
+    // 添加底部栏，显示收发字符数
+    statusLabel = new QLabel("Sent: 0 bytes | Received: 0 bytes", this);
 
     // Layout
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -58,27 +62,28 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     settingsLayout->addRow("Flow Control:", flowControlComboBox);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout;
-    buttonLayout->addWidget(connectButton);
-    buttonLayout->addWidget(disconnectButton);
+    buttonLayout->addWidget(connectButton); // 合并后的按钮
 
-    // 添加发送按钮到布局
-    QHBoxLayout *sendLayout = new QHBoxLayout;
-    sendLayout->addWidget(sendButton);
+    // 添加发送按钮和清空接收区按钮到布局
+    QHBoxLayout *sendClearLayout = new QHBoxLayout;
+    sendClearLayout->addWidget(sendButton);
+    sendClearLayout->addWidget(clearReceiveButton);
 
     mainLayout->addLayout(settingsLayout);
     mainLayout->addLayout(buttonLayout);
     mainLayout->addWidget(receiveTextEdit);
     mainLayout->addWidget(sendTextEdit);
-    mainLayout->addLayout(sendLayout); // 将发送按钮布局添加到主布局
+    mainLayout->addLayout(sendClearLayout);
     mainLayout->addWidget(hexReceiveCheckBox);
     mainLayout->addWidget(hexSendCheckBox);
+    mainLayout->addWidget(statusLabel); // 添加底部栏
 
     loadcomSettings();
 
     // Connect signals and slots
-    connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::connectSerialPort);
-    connect(disconnectButton, &QPushButton::clicked, this, &SerialPortWidget::disconnectSerialPort);
-    connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData); // 连接发送按钮的点击事件
+    connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::toggleConnection);
+    connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
+    connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
 }
 
 SerialPortWidget::~SerialPortWidget()
@@ -88,6 +93,15 @@ SerialPortWidget::~SerialPortWidget()
         serialPort->close();
     }
     delete serialPort;
+}
+
+void SerialPortWidget::toggleConnection()
+{
+    if (serialPort && serialPort->isOpen()) {
+        disconnectSerialPort();
+    } else {
+        connectSerialPort();
+    }
 }
 
 void SerialPortWidget::connectSerialPort()
@@ -105,10 +119,7 @@ void SerialPortWidget::connectSerialPort()
     serialPort->setFlowControl(static_cast<QSerialPort::FlowControl>(flowControlComboBox->currentIndex()));
 
     if (serialPort->open(QIODevice::ReadWrite)) {
-        connectButton->setEnabled(false);
-        disconnectButton->setEnabled(true);
-
-        // 连接 readyRead 信号
+        connectButton->setText("Disconnect");
         connect(serialPort, &QSerialPort::readyRead, this, &SerialPortWidget::receiveData);
     } else {
         QMessageBox::critical(this, "Error", "Failed to open serial port.");
@@ -120,63 +131,42 @@ void SerialPortWidget::disconnectSerialPort()
     if (serialPort && serialPort->isOpen()) {
         serialPort->close();
     }
-    connectButton->setEnabled(true);
-    disconnectButton->setEnabled(false);
+    connectButton->setText("Connect");
 }
 
 void SerialPortWidget::sendData()
 {
     if (serialPort && serialPort->isOpen()) {
-        // 获取发送区的内容
         QString dataStr = sendTextEdit->toPlainText();
 
-        // 如果 HEX 发送模式被选中
         if (hexSendCheckBox->isChecked()) {
-            // 移除所有空格和换行符
             dataStr = dataStr.replace(" ", "").replace("\n", "");
-
-            // 检查是否为有效的 HEX 字符串
             QRegExp hexRegExp("^[0-9A-Fa-f]+$");
             if (!hexRegExp.exactMatch(dataStr)) {
                 QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
                 return;
             }
-
-            // 如果长度为奇数，补零
             if (dataStr.length() % 2 != 0) {
                 dataStr.prepend("0");
             }
-
-            // 将 HEX 字符串转换为 QByteArray
             QByteArray data = QByteArray::fromHex(dataStr.toUtf8());
-
-            // 发送数据
             if (serialPort->write(data) == -1) {
                 QMessageBox::critical(this, "Error", "Failed to send data.");
             } else {
-                // 将发送的数据显示在接收区（自动分割）
-                QString formattedData;
-                for (int i = 0; i < dataStr.length(); i += 2) {
-                    formattedData += dataStr.mid(i, 2) + " ";
-                }
-                formattedData = formattedData.trimmed(); // 移除最后一个空格
-                QDateTime currentDateTime = QDateTime::currentDateTime();//显示时间戳
+                sentBytes += data.size();
+                updateStatusLabel();
+                QDateTime currentDateTime = QDateTime::currentDateTime();
                 receiveTextEdit->append(currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz"));
-                receiveTextEdit->append("Sent: " + formattedData);
-
-
-                // 清空发送区（可选）
-                sendTextEdit->clear();
-                sendTextEdit->append(formattedData);
+                receiveTextEdit->append("Sent: " + dataStr);
             }
         } else {
-            // 直接发送文本数据
             QByteArray data = dataStr.toUtf8();
             if (serialPort->write(data) == -1) {
                 QMessageBox::critical(this, "Error", "Failed to send data.");
             } else {
-                // 将发送的数据显示在接收区
-                QDateTime currentDateTime = QDateTime::currentDateTime();//显示时间戳
+                sentBytes += data.size();
+                updateStatusLabel();
+                QDateTime currentDateTime = QDateTime::currentDateTime();
                 receiveTextEdit->append(currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz"));
                 receiveTextEdit->append("Sent: " + dataStr);
             }
@@ -190,7 +180,9 @@ void SerialPortWidget::receiveData()
 {
     if (serialPort && serialPort->isOpen()) {
         QByteArray data = serialPort->readAll();
-        QDateTime currentDateTime = QDateTime::currentDateTime();//显示时间戳
+        receivedBytes += data.size();
+        updateStatusLabel();
+        QDateTime currentDateTime = QDateTime::currentDateTime();
         receiveTextEdit->append(currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz"));
         if (hexReceiveCheckBox->isChecked()) {
             receiveTextEdit->append("Recv: " + data.toHex());
@@ -198,6 +190,19 @@ void SerialPortWidget::receiveData()
             receiveTextEdit->append("Recv: " + data);
         }
     }
+}
+
+void SerialPortWidget::clearReceiveArea()
+{
+    receiveTextEdit->clear();
+    sentBytes = 0;
+    receivedBytes = 0;
+    updateStatusLabel();
+}
+
+void SerialPortWidget::updateStatusLabel()
+{
+    statusLabel->setText(QString("Sent: %1 bytes | Received: %2 bytes").arg(sentBytes).arg(receivedBytes));
 }
 
 void SerialPortWidget::loadcomSettings()
