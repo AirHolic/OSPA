@@ -11,11 +11,53 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Serial Port Manager</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
-  <widget class="QMenuBar" name="menubar"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <action name="actionRefresh"/>
+   <action name="actionOpen"/>
+   <widget class="QComboBox" name="comboBoxSerialPorts">
+    <property name="minimumSize">
+     <size>
+      <width>150</width>
+      <height>0</height>
+     </size>
+    </property>
+   </widget>
+  </widget>
+  <action name="actionRefresh">
+   <property name="text">
+    <string>Refresh Serial Ports</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open Serial Port</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
