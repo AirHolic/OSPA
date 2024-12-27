@@ -12,6 +12,9 @@
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     : QWidget(parent), serialPort(nullptr), portName(portName)
 {
+    //添加配置文件
+    settings = new QSettings("config.ini", QSettings::IniFormat);
+
     // Create UI elements
     receiveTextEdit = new QTextEdit(this);
     receiveTextEdit->setReadOnly(true);
@@ -20,23 +23,18 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
 
     baudRateComboBox = new QComboBox(this);
     baudRateComboBox->addItems({"9600", "19200", "38400", "57600", "115200"});
-    baudRateComboBox->setCurrentText("9600");
 
     dataBitsComboBox = new QComboBox(this);
     dataBitsComboBox->addItems({"5", "6", "7", "8"});
-    dataBitsComboBox->setCurrentText("8");
 
     parityComboBox = new QComboBox(this);
     parityComboBox->addItems({"None", "Even", "Odd", "Mark", "Space"});
-    parityComboBox->setCurrentText("None");
 
     stopBitsComboBox = new QComboBox(this);
     stopBitsComboBox->addItems({"1", "1.5", "2"});
-    stopBitsComboBox->setCurrentText("1");
 
     flowControlComboBox = new QComboBox(this);
     flowControlComboBox->addItems({"None", "Hardware", "Software"});
-    flowControlComboBox->setCurrentText("None");
 
     connectButton = new QPushButton("Connect", this);
     disconnectButton = new QPushButton("Disconnect", this);
@@ -44,6 +42,7 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
 
     hexReceiveCheckBox = new QCheckBox("HEX Receive", this);
     hexSendCheckBox = new QCheckBox("HEX Send", this);
+
 
     // 添加发送按钮
     sendButton = new QPushButton("Send", this);
@@ -74,6 +73,8 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     mainLayout->addWidget(hexReceiveCheckBox);
     mainLayout->addWidget(hexSendCheckBox);
 
+    loadcomSettings();
+
     // Connect signals and slots
     connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::connectSerialPort);
     connect(disconnectButton, &QPushButton::clicked, this, &SerialPortWidget::disconnectSerialPort);
@@ -82,6 +83,7 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
 
 SerialPortWidget::~SerialPortWidget()
 {
+    savecomSettings();
     if (serialPort && serialPort->isOpen()) {
         serialPort->close();
     }
@@ -198,18 +200,27 @@ void SerialPortWidget::receiveData()
     }
 }
 
-void SerialPortWidget::updateSettings()
+void SerialPortWidget::loadcomSettings()
 {
-    if (serialPort && serialPort->isOpen()) {
-        serialPort->setBaudRate(baudRateComboBox->currentText().toInt());
-        serialPort->setDataBits(static_cast<QSerialPort::DataBits>(dataBitsComboBox->currentText().toInt()));
-        serialPort->setParity(static_cast<QSerialPort::Parity>(parityComboBox->currentIndex()));
-        serialPort->setStopBits(static_cast<QSerialPort::StopBits>(stopBitsComboBox->currentIndex() + 1));
-        serialPort->setFlowControl(static_cast<QSerialPort::FlowControl>(flowControlComboBox->currentIndex()));
-    }
+    baudRateComboBox->setCurrentText(settings->value(portName+"/BaudRate", "9600").toString());
+    dataBitsComboBox->setCurrentText(settings->value(portName+"/DataBits", "8").toString());
+    parityComboBox->setCurrentText(settings->value(portName+"/Parity", "None").toString());
+    stopBitsComboBox->setCurrentText(settings->value(portName+"/StopBits", "1").toString());
+    flowControlComboBox->setCurrentText(settings->value(portName+"/FlowControl", "None").toString());
+    hexReceiveCheckBox->setChecked(settings->value(portName+"/HexReceive", false).toBool());
+    hexSendCheckBox->setChecked(settings->value(portName+"/HexSend", false).toBool());
 }
 
-void SerialPortWidget::saveSetting()
+void SerialPortWidget::savecomSettings()
 {
-
+    settings->beginGroup(portName);
+    settings->setValue("BaudRate", baudRateComboBox->currentText());
+    settings->setValue("DataBits", dataBitsComboBox->currentText());
+    settings->setValue("Parity", parityComboBox->currentText());
+    settings->setValue("StopBits", stopBitsComboBox->currentText());
+    settings->setValue("FlowControl", flowControlComboBox->currentText());
+    settings->setValue("HexReceive", hexReceiveCheckBox->isChecked());
+    settings->setValue("HexSend", hexSendCheckBox->isChecked());
+    settings->endGroup();
+    settings->sync();
 }

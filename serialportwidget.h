@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QSerialPort>
+#include <QSettings>
 
 class QTextEdit;
 class QComboBox;
@@ -25,10 +26,11 @@ private slots:
     void disconnectSerialPort();
     void sendData();
     void receiveData();
-    void updateSettings();
+
 
 private:
     QSerialPort *serialPort;
+    QSettings *settings;
     QTextEdit *receiveTextEdit;
     QTextEdit *sendTextEdit;
     QComboBox *baudRateComboBox;
@@ -43,6 +45,9 @@ private:
     QCheckBox *hexSendCheckBox;
 
     QString portName;
+
+    void loadcomSettings();
+    void savecomSettings();
 };
 
 #endif // SERIALPORTWIDGET_H
