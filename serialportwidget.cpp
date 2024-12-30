@@ -1,4 +1,5 @@
 #include "serialportwidget.h"
+#include "searchdialog.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -9,19 +10,40 @@
 #include <QMessageBox>
 #include <QDateTime>
 #include <QLabel>
+#include <QShortcut>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0)
 {
-    // 添加配置文件
-    settings = new QSettings("config.ini", QSettings::IniFormat);
+    settings = new QSettings("config.ini", QSettings::IniFormat, this);
+    initUI();
+    initConnections();
+    loadSettings();
 
-    // Create UI elements
+    // 添加 Ctrl+F 快捷键
+    QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
+    connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
+}
+
+SerialPortWidget::~SerialPortWidget()
+{
+    saveSettings();
+    if (serialPort && serialPort->isOpen()) {
+        serialPort->close();
+    }
+    delete serialPort;
+}
+
+void SerialPortWidget::initUI()
+{
+    // 接收区
     receiveTextEdit = new QTextEdit(this);
     receiveTextEdit->setReadOnly(true);
 
+    // 发送区
     sendTextEdit = new QTextEdit(this);
 
+    // 串口配置
     baudRateComboBox = new QComboBox(this);
     baudRateComboBox->addItems({"9600", "19200", "38400", "57600", "115200"});
 
@@ -37,21 +59,19 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     flowControlComboBox = new QComboBox(this);
     flowControlComboBox->addItems({"None", "Hardware", "Software"});
 
-    connectButton = new QPushButton("Connect", this); // 合并连接和断开按钮
+    // 按钮
+    connectButton = new QPushButton("Connect", this);
+    sendButton = new QPushButton("Send", this);
+    clearReceiveButton = new QPushButton("Clear Receive", this);
 
+    // 复选框
     hexReceiveCheckBox = new QCheckBox("HEX Receive", this);
     hexSendCheckBox = new QCheckBox("HEX Send", this);
 
-    // 添加发送按钮
-    sendButton = new QPushButton("Send", this);
-
-    // 添加清空接收区按钮
-    clearReceiveButton = new QPushButton("Clear Receive", this);
-
-    // 添加底部栏，显示收发字符数
+    // 状态栏
     statusLabel = new QLabel("Sent: 0 bytes | Received: 0 bytes", this);
 
-    // Layout
+    // 布局
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
     // 接收区和相关控件
@@ -90,25 +110,14 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     mainLayout->addLayout(downLayout);
 
     // 添加底部栏
-    QVBoxLayout *bottomLayout = new QVBoxLayout;
-    bottomLayout->addWidget(statusLabel);
-    mainLayout->addLayout(bottomLayout);
+    mainLayout->addWidget(statusLabel);
+}
 
-    loadcomSettings();
-
-    // Connect signals and slots
+void SerialPortWidget::initConnections()
+{
     connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::toggleConnection);
     connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
-}
-
-SerialPortWidget::~SerialPortWidget()
-{
-    savecomSettings();
-    if (serialPort && serialPort->isOpen()) {
-        serialPort->close();
-    }
-    delete serialPort;
 }
 
 void SerialPortWidget::toggleConnection()
@@ -123,11 +132,7 @@ void SerialPortWidget::toggleConnection()
 void SerialPortWidget::connectSerialPort()
 {
     serialPort = new QSerialPort(this);
-
-    // 设置串口名称
     serialPort->setPortName(portName);
-
-    // 设置串口参数
     serialPort->setBaudRate(baudRateComboBox->currentText().toInt());
     serialPort->setDataBits(static_cast<QSerialPort::DataBits>(dataBitsComboBox->currentText().toInt()));
     serialPort->setParity(static_cast<QSerialPort::Parity>(parityComboBox->currentIndex()));
@@ -171,9 +176,7 @@ void SerialPortWidget::sendData()
             } else {
                 sentBytes += data.size();
                 updateStatusLabel();
-                QDateTime currentDateTime = QDateTime::currentDateTime();
-                receiveTextEdit->append("["+currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz")+"]");
-                receiveTextEdit->append("Sent: " + dataStr);
+                logMessage("Sent: " + dataStr);
             }
         } else {
             QByteArray data = dataStr.toUtf8();
@@ -182,9 +185,7 @@ void SerialPortWidget::sendData()
             } else {
                 sentBytes += data.size();
                 updateStatusLabel();
-                QDateTime currentDateTime = QDateTime::currentDateTime();
-                receiveTextEdit->append("["+currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz")+"]");
-                receiveTextEdit->append("Sent: " + dataStr);
+                logMessage("Sent: " + dataStr);
             }
         }
     } else {
@@ -198,12 +199,10 @@ void SerialPortWidget::receiveData()
         QByteArray data = serialPort->readAll();
         receivedBytes += data.size();
         updateStatusLabel();
-        QDateTime currentDateTime = QDateTime::currentDateTime();
-        receiveTextEdit->append("["+currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz")+"]");
         if (hexReceiveCheckBox->isChecked()) {
-            receiveTextEdit->append("Recv: " + data.toHex());
+            logMessage("Recv: " + data.toHex());
         } else {
-            receiveTextEdit->append("Recv: " + data);
+            logMessage("Recv: " + data);
         }
     }
 }
@@ -221,18 +220,24 @@ void SerialPortWidget::updateStatusLabel()
     statusLabel->setText(QString("Sent: %1 bytes | Received: %2 bytes").arg(sentBytes).arg(receivedBytes));
 }
 
-void SerialPortWidget::loadcomSettings()
+void SerialPortWidget::logMessage(const QString &message)
 {
-    baudRateComboBox->setCurrentText(settings->value(portName+"/BaudRate", "9600").toString());
-    dataBitsComboBox->setCurrentText(settings->value(portName+"/DataBits", "8").toString());
-    parityComboBox->setCurrentText(settings->value(portName+"/Parity", "None").toString());
-    stopBitsComboBox->setCurrentText(settings->value(portName+"/StopBits", "1").toString());
-    flowControlComboBox->setCurrentText(settings->value(portName+"/FlowControl", "None").toString());
-    hexReceiveCheckBox->setChecked(settings->value(portName+"/HexReceive", false).toBool());
-    hexSendCheckBox->setChecked(settings->value(portName+"/HexSend", false).toBool());
+    QDateTime currentDateTime = QDateTime::currentDateTime();
+    receiveTextEdit->append("[" + currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz") + "] " + message);
 }
 
-void SerialPortWidget::savecomSettings()
+void SerialPortWidget::loadSettings()
+{
+    baudRateComboBox->setCurrentText(settings->value(portName + "/BaudRate", "9600").toString());
+    dataBitsComboBox->setCurrentText(settings->value(portName + "/DataBits", "8").toString());
+    parityComboBox->setCurrentText(settings->value(portName + "/Parity", "None").toString());
+    stopBitsComboBox->setCurrentText(settings->value(portName + "/StopBits", "1").toString());
+    flowControlComboBox->setCurrentText(settings->value(portName + "/FlowControl", "None").toString());
+    hexReceiveCheckBox->setChecked(settings->value(portName + "/HexReceive", false).toBool());
+    hexSendCheckBox->setChecked(settings->value(portName + "/HexSend", false).toBool());
+}
+
+void SerialPortWidget::saveSettings()
 {
     settings->beginGroup(portName);
     settings->setValue("BaudRate", baudRateComboBox->currentText());
@@ -244,4 +249,10 @@ void SerialPortWidget::savecomSettings()
     settings->setValue("HexSend", hexSendCheckBox->isChecked());
     settings->endGroup();
     settings->sync();
+}
+
+void SerialPortWidget::openSearchDialog()
+{
+    SearchDialog *searchDialog = new SearchDialog(receiveTextEdit, this);
+    searchDialog->show();
 }

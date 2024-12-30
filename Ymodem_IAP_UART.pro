@@ -18,14 +18,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    searchdialog.cpp \
     serialportwidget.cpp
 
 HEADERS += \
     mainwindow.h \
+    searchdialog.h \
     serialportwidget.h
 
 FORMS += \
     mainwindow.ui \
+    searchdialog.ui \
     serialportwidget.ui
 
 # Default rules for deployment.
