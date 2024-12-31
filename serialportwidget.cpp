@@ -11,6 +11,7 @@
 #include <QDateTime>
 #include <QLabel>
 #include <QShortcut>
+#include <QDockWidget>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0)
@@ -32,6 +33,11 @@ SerialPortWidget::~SerialPortWidget()
         serialPort->close();
     }
     delete serialPort;
+}
+
+void SerialPortWidget::setDockWidget(QDockWidget *dockWidget)
+{
+    this->dockWidget = dockWidget;
 }
 
 void SerialPortWidget::initUI()

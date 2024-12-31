@@ -1,42 +1,45 @@
 #include "mainwindow.h"
 #include "serialportwidget.h"
 #include <QToolBar>
-#include <QComboBox>
-#include <QVBoxLayout>
 #include <QMessageBox>
 #include <QDebug>
+#include <QVBoxLayout>
+#include <QDockWidget>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowTitle("Serial Port Manager");
 
-    // Create the tab widget
+    // 创建标签页控件
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
     tabWidget->setTabsClosable(true);
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeSerialPort);
 
-    // Create toolbar
+    // 连接标签页双击事件
+    connect(tabWidget, &QTabWidget::tabBarDoubleClicked, this, &MainWindow::onTabDockRequested);
+
+    // 创建工具栏
     QToolBar *toolBar = new QToolBar(this);
     addToolBar(toolBar);
 
-    // Add refresh action to toolbar
+    // 添加刷新串口列表按钮
     QAction *refreshAction = new QAction("Refresh Serial Ports", this);
     connect(refreshAction, &QAction::triggered, this, &MainWindow::refreshSerialPorts);
     toolBar->addAction(refreshAction);
 
-    // Add open action to toolbar
+    // 添加打开串口按钮
     QAction *openAction = new QAction("Open Serial Port", this);
     connect(openAction, &QAction::triggered, this, &MainWindow::openSerialPort);
     toolBar->addAction(openAction);
 
-    // Add combo box for serial ports
+    // 添加串口选择下拉框
     comboBoxSerialPorts = new QComboBox(this);
     comboBoxSerialPorts->setMinimumWidth(150);
     toolBar->addWidget(comboBoxSerialPorts);
 
-    // Refresh serial ports list
+    // 刷新串口列表
     refreshSerialPorts();
 }
 
@@ -49,7 +52,7 @@ void MainWindow::refreshSerialPorts()
     availablePorts = QSerialPortInfo::availablePorts();
     qDebug() << "Available ports:" << availablePorts.size();
 
-    // Update the combo box with available ports
+    // 更新下拉框中的串口列表
     comboBoxSerialPorts->clear();
     for (const QSerialPortInfo &port : availablePorts) {
         comboBoxSerialPorts->addItem(port.portName());
@@ -63,25 +66,35 @@ void MainWindow::openSerialPort()
         return;
     }
 
-    // Get the selected port name from the combo box
+    // 获取下拉框中选择的串口名称
     QString selectedPort = comboBoxSerialPorts->currentText();
 
-    // Check if a tab with the same port name already exists
+    // 检查是否已存在相同串口的标签页
     for (int i = 0; i < tabWidget->count(); ++i) {
         if (tabWidget->tabText(i) == selectedPort) {
-            // Switch to the existing tab
+            // 切换到已存在的标签页
             tabWidget->setCurrentIndex(i);
-            return; // Exit the function without creating a new tab
+            return;
         }
     }
 
-    // Create a new serial port widget
+    // 检查是否已存在相同串口的独立窗口
+    for (QDockWidget *dockWidget : findChildren<QDockWidget *>()) {
+        if (dockWidget->windowTitle() == selectedPort) {
+            // 激活并聚焦到该窗口
+            dockWidget->raise();
+            dockWidget->activateWindow();
+            return;
+        }
+    }
+
+    // 创建新的串口控件
     SerialPortWidget *widget = new SerialPortWidget(selectedPort, this);
     tabWidget->addTab(widget, selectedPort);
     serialPortWidgets.append(widget);
     tabWidget->setCurrentWidget(widget);
 
-    // Connect the close signal
+    // 连接关闭信号
     connect(widget, &SerialPortWidget::closeRequested, this, &MainWindow::closeSerialPort);
 }
 
@@ -91,5 +104,41 @@ void MainWindow::closeSerialPort(int index)
         SerialPortWidget *widget = serialPortWidgets.takeAt(index);
         tabWidget->removeTab(index);
         delete widget;
+    }
+}
+
+void MainWindow::onTabDockRequested(int index)
+{
+    QWidget *widget = tabWidget->widget(index);
+    if (widget) {
+        // 创建 QDockWidget
+        QDockWidget *dockWidget = new QDockWidget(tabWidget->tabText(index), this);
+        dockWidget->setWidget(widget);
+        addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+
+        // 移除标签页
+        tabWidget->removeTab(index);
+
+        // 连接窗口拖回事件
+        connect(dockWidget, &QDockWidget::topLevelChanged, this, [this, dockWidget](bool topLevel) {
+            if (!topLevel) {
+                onDockTabRequested(dockWidget->widget());
+            }
+        });
+    }
+}
+
+void MainWindow::onDockTabRequested(QWidget *widget)
+{
+    QDockWidget *dockWidget = qobject_cast<QDockWidget *>(widget->parentWidget());
+    if (dockWidget) {
+        // 移除 QDockWidget
+        removeDockWidget(dockWidget);
+
+        // 将控件重新添加到标签页
+        tabWidget->addTab(widget, dockWidget->windowTitle());
+
+        // 删除 QDockWidget
+        dockWidget->deleteLater();
     }
 }

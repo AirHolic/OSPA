@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSerialPort>
 #include <QSettings>
+#include <QDockWidget>
 
 class QTextEdit;
 class QComboBox;
@@ -19,6 +20,8 @@ class SerialPortWidget : public QWidget
 public:
     explicit SerialPortWidget(const QString &portName, QWidget *parent = nullptr);
     ~SerialPortWidget();
+
+    void setDockWidget(QDockWidget *dockWidget); // 设置关联的 QDockWidget
 
 signals:
     void closeRequested(int index); // 请求关闭信号
@@ -65,6 +68,9 @@ private:
 
     // 快捷键
     QShortcut *searchShortcut; // Ctrl+F 快捷键
+
+    // DockWidget
+    QDockWidget *dockWidget; // 关联的 QDockWidget
 };
 
 #endif // SERIALPORTWIDGET_H

@@ -3,10 +3,12 @@
 
 #include <QMainWindow>
 #include <QTabWidget>
+#include <QDockWidget>
 #include <QSerialPortInfo>
-#include <QMessageBox>
-#include <QToolBar>
 #include <QComboBox>
+#include <QToolBar>
+#include <QAction>
+#include <QList>
 
 class SerialPortWidget;
 
@@ -15,21 +17,21 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void refreshSerialPorts();
-    void openSerialPort();
-    void closeSerialPort(int index);
+    void refreshSerialPorts(); // 刷新串口列表
+    void openSerialPort();     // 打开串口
+    void closeSerialPort(int index); // 关闭串口
+    void onTabDockRequested(int index); // 标签页拖出为窗口
+    void onDockTabRequested(QWidget *widget); // 窗口拖入为标签页
 
 private:
-    QTabWidget *tabWidget; // Tab widget to manage multiple serial port widgets
-    QList<QSerialPortInfo> availablePorts; // List of available serial ports
-    QList<SerialPortWidget*> serialPortWidgets; // List of active serial port widgets
-
-    QToolBar *toolBar; // Toolbar to hold actions and widgets
-    QComboBox *comboBoxSerialPorts; // Combo box to display available serial ports
+    QTabWidget *tabWidget; // 标签页控件
+    QComboBox *comboBoxSerialPorts; // 串口选择下拉框
+    QList<SerialPortWidget *> serialPortWidgets; // 串口控件列表
+    QList<QSerialPortInfo> availablePorts; // 可用串口列表
 };
 
 #endif // MAINWINDOW_H
