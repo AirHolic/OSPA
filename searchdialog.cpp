@@ -1,10 +1,11 @@
 #include "searchdialog.h"
 
-SearchDialog::SearchDialog(QTextEdit *textEdit, QWidget *parent)
+SearchDialog::SearchDialog(const QString &portName, QTextEdit *textEdit, QWidget *parent)
     : QDialog(parent), textEdit(textEdit)
 {
-    setWindowTitle("Search");
+    setWindowTitle(portName + " - Search");
     setModal(false); // 非模态对话框
+    //setWindowFlag(Qt::FramelessWindowHint); // 无边框窗口
 
     // 搜索输入框
     searchLineEdit = new QLineEdit(this);

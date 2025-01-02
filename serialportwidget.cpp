@@ -26,7 +26,7 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
 
     // 初始化搜索对话框
-    searchDialog = new SearchDialog(receiveTextEdit, this);
+    searchDialog = new SearchDialog(portName, receiveTextEdit, this);
     searchDialog->setParent(this,searchDialog->windowFlags());
     //searchDialog->setWindowFlag(Qt::Window, false); // 设置为非独立窗口
     //searchDialog->setParent(this,searchDialog->windowFlags());

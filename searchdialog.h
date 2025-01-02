@@ -16,7 +16,7 @@ class SearchDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SearchDialog(QTextEdit *textEdit, QWidget *parent = nullptr);
+    explicit SearchDialog(const QString &portName, QTextEdit *textEdit, QWidget *parent = nullptr);
     bool getShowFlag();
     void setShowFlag(bool flag);
 

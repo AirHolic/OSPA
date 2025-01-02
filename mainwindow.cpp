@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowTitle("Serial Port Manager");
+    setMinimumSize(800,600);
 
     // 创建标签页控件
     tabWidget = new QTabWidget(this);
