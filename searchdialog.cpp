@@ -40,6 +40,29 @@ SearchDialog::SearchDialog(QTextEdit *textEdit, QWidget *parent)
     connect(findPreviousButton, &QPushButton::clicked, this, &SearchDialog::findPrevious);
 }
 
+void SearchDialog::closeEvent(QCloseEvent *)
+{
+    //setDisabled();
+    setShowFlag(false);
+}
+
+void SearchDialog::reject()
+{
+    //setDisabled();
+    setShowFlag(false);
+    QDialog::reject();
+}
+
+bool SearchDialog::getShowFlag()
+{
+    return showFlag;
+}
+
+void SearchDialog::setShowFlag(bool flag)
+{
+    showFlag = flag;
+}
+
 void SearchDialog::findNext()
 {
     QString searchText = searchLineEdit->text();

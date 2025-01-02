@@ -12,6 +12,7 @@ class QPushButton;
 class QCheckBox;
 class QLabel;
 class QShortcut;
+class SearchDialog;
 
 class SerialPortWidget : public QWidget
 {
@@ -25,6 +26,10 @@ public:
 
 signals:
     void closeRequested(int index); // 请求关闭信号
+
+protected:
+    void showEvent(QShowEvent *event) override; // 显示事件
+    void hideEvent(QHideEvent *event) override; // 隐藏事件
 
 private slots:
     void toggleConnection(); // 切换连接状态
@@ -71,6 +76,9 @@ private:
 
     // DockWidget
     QDockWidget *dockWidget; // 关联的 QDockWidget
+
+    // 搜索对话框
+    SearchDialog *searchDialog; // 搜索对话框
 };
 
 #endif // SERIALPORTWIDGET_H

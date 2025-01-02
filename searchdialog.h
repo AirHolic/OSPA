@@ -17,6 +17,12 @@ class SearchDialog : public QDialog
 
 public:
     explicit SearchDialog(QTextEdit *textEdit, QWidget *parent = nullptr);
+    bool getShowFlag();
+    void setShowFlag(bool flag);
+
+protected:
+    void closeEvent(QCloseEvent *) override;
+    void reject() override;
 
 private slots:
     void findNext();
@@ -36,6 +42,8 @@ private:
     QTextDocument::FindFlags getFindFlags() const;
     int findTotalMatches() const; // 查找总匹配数
     int findCurrentMatchIndex(const QTextCursor &cursor) const; // 查找当前匹配项的位置
+
+    bool showFlag;
 };
 
 #endif // SEARCHDIALOG_H

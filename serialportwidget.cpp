@@ -14,7 +14,7 @@
 #include <QDockWidget>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
-    : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0)
+    : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0), dockWidget(nullptr)
 {
     settings = new QSettings("config.ini", QSettings::IniFormat, this);
     initUI();
@@ -24,6 +24,14 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     // 添加 Ctrl+F 快捷键
     QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
     connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
+
+    // 初始化搜索对话框
+    searchDialog = new SearchDialog(receiveTextEdit, this);
+    searchDialog->setParent(this,searchDialog->windowFlags());
+    //searchDialog->setWindowFlag(Qt::Window, false); // 设置为非独立窗口
+    //searchDialog->setParent(this,searchDialog->windowFlags());
+    searchDialog->hide(); // 初始隐藏
+    searchDialog->setShowFlag(false);// 初始隐藏
 }
 
 SerialPortWidget::~SerialPortWidget()
@@ -33,6 +41,31 @@ SerialPortWidget::~SerialPortWidget()
         serialPort->close();
     }
     delete serialPort;
+}
+
+void SerialPortWidget::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    if (searchDialog->getShowFlag() == true) {
+        searchDialog->show(); // 显示搜索对话框
+    }
+}
+
+void SerialPortWidget::hideEvent(QHideEvent *event)
+{
+    QWidget::hideEvent(event);
+    if (searchDialog) {
+        searchDialog->hide(); // 隐藏搜索对话框
+    }
+}
+
+void SerialPortWidget::openSearchDialog()
+{
+    if (searchDialog) {
+        searchDialog->show(); // 显示搜索对话框
+        searchDialog->activateWindow(); // 激活窗口
+        searchDialog->setShowFlag(true);// 设置显示标志
+    }
 }
 
 void SerialPortWidget::setDockWidget(QDockWidget *dockWidget)
@@ -257,8 +290,4 @@ void SerialPortWidget::saveSettings()
     settings->sync();
 }
 
-void SerialPortWidget::openSearchDialog()
-{
-    SearchDialog *searchDialog = new SearchDialog(receiveTextEdit, this);
-    searchDialog->show();
-}
+
