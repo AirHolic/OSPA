@@ -113,6 +113,7 @@ void MainWindow::onTabDockRequested(int index)
     if (widget) {
         // 创建 QDockWidget
         QDockWidget *dockWidget = new QDockWidget(tabWidget->tabText(index), this);
+        dockWidget->setAttribute(Qt::WA_DeleteOnClose);// 关闭时删除
         dockWidget->setWidget(widget);
         addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 
