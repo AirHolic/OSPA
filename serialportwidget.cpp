@@ -19,19 +19,8 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     settings = new QSettings("config.ini", QSettings::IniFormat, this);
     initUI();
     initConnections();
+    initSearchDialog();
     loadSettings();
-
-    // 添加 Ctrl+F 快捷键
-    QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
-    connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
-
-    // 初始化搜索对话框
-    searchDialog = new SearchDialog(portName, receiveTextEdit, this);
-    searchDialog->setParent(this,searchDialog->windowFlags());
-    //searchDialog->setWindowFlag(Qt::Window, false); // 设置为非独立窗口
-    //searchDialog->setParent(this,searchDialog->windowFlags());
-    searchDialog->hide(); // 初始隐藏
-    searchDialog->setShowFlag(false);// 初始隐藏
 }
 
 SerialPortWidget::~SerialPortWidget()
@@ -106,6 +95,7 @@ void SerialPortWidget::initUI()
     // 复选框
     hexReceiveCheckBox = new QCheckBox("HEX Receive", this);
     hexSendCheckBox = new QCheckBox("HEX Send", this);
+    sendNewRowCheckbox = new QCheckBox("Send New Row", this);
 
     // 状态栏
     statusLabel = new QLabel("Sent: 0 bytes | Received: 0 bytes", this);
@@ -140,6 +130,7 @@ void SerialPortWidget::initUI()
     // 发送区侧边布局：十六进制发送勾选框和发送按钮
     QVBoxLayout *sendSideLayout = new QVBoxLayout;
     sendSideLayout->addWidget(hexSendCheckBox);
+    sendSideLayout->addWidget(sendNewRowCheckbox);
     sendSideLayout->addWidget(sendButton);
 
     downLayout->addLayout(sendSideLayout);
@@ -157,6 +148,21 @@ void SerialPortWidget::initConnections()
     connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::toggleConnection);
     connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
+}
+
+void SearchDialog::initSearchDialog()
+{
+    // 添加 Ctrl+F 快捷键
+    QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
+    connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
+
+    // 初始化搜索对话框
+    searchDialog = new SearchDialog(portName, receiveTextEdit, this);
+    searchDialog->setParent(this,searchDialog->windowFlags());
+    //searchDialog->setWindowFlag(Qt::Window, false); // 设置为非独立窗口
+    //searchDialog->setParent(this,searchDialog->windowFlags());
+    searchDialog->hide(); // 初始隐藏
+    searchDialog->setShowFlag(false);// 初始隐藏
 }
 
 void SerialPortWidget::toggleConnection()
@@ -209,15 +215,25 @@ void SerialPortWidget::sendData()
             if (dataStr.length() % 2 != 0) {
                 dataStr.prepend("0");
             }
+            if (sendNewRowCheckbox->isChecked()) {
+                dataStr.append("\r\n");
+            }
             QByteArray data = QByteArray::fromHex(dataStr.toUtf8());
             if (serialPort->write(data) == -1) {
                 QMessageBox::critical(this, "Error", "Failed to send data.");
             } else {
                 sentBytes += data.size();
                 updateStatusLabel();
-                logMessage("Sent: " + dataStr);
+                data = data.toHex().toUpper();
+                for (int i = 2; i < data.size(); i += 3) {
+                    data.insert(i, ' ');
+                }
+                logMessage("Sent: " + data);
             }
         } else {
+            if (sendNewRowCheckbox->isChecked()) {
+                dataStr.append("\r\n");
+            }
             QByteArray data = dataStr.toUtf8();
             if (serialPort->write(data) == -1) {
                 QMessageBox::critical(this, "Error", "Failed to send data.");
@@ -239,7 +255,12 @@ void SerialPortWidget::receiveData()
         receivedBytes += data.size();
         updateStatusLabel();
         if (hexReceiveCheckBox->isChecked()) {
-            logMessage("Recv: " + data.toHex());
+            data = data.toHex();
+            data = data.toUpper();
+            for (int i = 2; i < data.size(); i += 3) {
+                data.insert(i, ' ');
+            }
+            logMessage("Recv: " + data);
         } else {
             logMessage("Recv: " + data);
         }

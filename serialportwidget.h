@@ -41,6 +41,7 @@ private slots:
 private:
     void initUI();           // 初始化 UI
     void initConnections();  // 初始化信号槽连接
+    void initSearchDialog(); // 初始化搜索对话框
     void loadSettings();     // 加载配置
     void saveSettings();     // 保存配置
     void updateStatusLabel(); // 更新状态栏
@@ -65,6 +66,7 @@ private:
     QPushButton *clearReceiveButton; // 清空接收区按钮
     QCheckBox *hexReceiveCheckBox;  // HEX 接收复选框
     QCheckBox *hexSendCheckBox;     // HEX 发送复选框
+    QCheckBox *sendNewRowCheckbox;  // 发送新行复选框
     QLabel *statusLabel;            // 状态栏
 
     // 统计信息
