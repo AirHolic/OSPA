@@ -4,6 +4,7 @@ SearchDialog::SearchDialog(const QString &portName, QTextEdit *textEdit, QWidget
     : QDialog(parent), textEdit(textEdit)
 {
     setWindowTitle(portName + " - Search");
+    setWindowFlag(Qt::WindowContextHelpButtonHint, false);
     setModal(false); // 非模态对话框
     //setWindowFlag(Qt::FramelessWindowHint); // 无边框窗口
 

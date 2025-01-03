@@ -150,7 +150,7 @@ void SerialPortWidget::initConnections()
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
 }
 
-void SearchDialog::initSearchDialog()
+void SerialPortWidget::initSearchDialog()
 {
     // 添加 Ctrl+F 快捷键
     QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
@@ -204,6 +204,10 @@ void SerialPortWidget::sendData()
 {
     if (serialPort && serialPort->isOpen()) {
         QString dataStr = sendTextEdit->toPlainText();
+        if (dataStr.isEmpty()) {
+            QMessageBox::warning(this, "Warning", "Please enter data to send.");
+            return;
+        }
 
         if (hexSendCheckBox->isChecked()) {
             dataStr = dataStr.replace(" ", "").replace("\n", "");
@@ -215,10 +219,10 @@ void SerialPortWidget::sendData()
             if (dataStr.length() % 2 != 0) {
                 dataStr.prepend("0");
             }
-            if (sendNewRowCheckbox->isChecked()) {
-                dataStr.append("\r\n");
-            }
             QByteArray data = QByteArray::fromHex(dataStr.toUtf8());
+            if (sendNewRowCheckbox->isChecked()) {
+                data.append(0x0D).append(0x0A);
+            }
             if (serialPort->write(data) == -1) {
                 QMessageBox::critical(this, "Error", "Failed to send data.");
             } else {
@@ -232,7 +236,7 @@ void SerialPortWidget::sendData()
             }
         } else {
             if (sendNewRowCheckbox->isChecked()) {
-                dataStr.append("\r\n");
+                dataStr.append(0x0D).append(0x0A);
             }
             QByteArray data = dataStr.toUtf8();
             if (serialPort->write(data) == -1) {
