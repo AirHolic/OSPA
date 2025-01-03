@@ -56,7 +56,7 @@ void MainWindow::refreshSerialPorts()
     // 更新下拉框中的串口列表
     comboBoxSerialPorts->clear();
     for (const QSerialPortInfo &port : availablePorts) {
-        comboBoxSerialPorts->addItem(port.portName());
+        comboBoxSerialPorts->addItem(port.portName()+" "+port.description());
     }
 }
 

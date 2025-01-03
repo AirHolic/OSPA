@@ -255,12 +255,14 @@ void SerialPortWidget::sendData()
 void SerialPortWidget::receiveData()
 {
     if (serialPort && serialPort->isOpen()) {
-        QByteArray data = serialPort->readAll();
+        QByteArray data;
+        while (serialPort->bytesAvailable() > 0) {// 串口数据接收while循环
+            data = serialPort->readAll();
+        }
         receivedBytes += data.size();
         updateStatusLabel();
         if (hexReceiveCheckBox->isChecked()) {
-            data = data.toHex();
-            data = data.toUpper();
+            data = data.toHex().toUpper();
             for (int i = 2; i < data.size(); i += 3) {
                 data.insert(i, ' ');
             }
@@ -299,6 +301,8 @@ void SerialPortWidget::loadSettings()
     flowControlComboBox->setCurrentText(settings->value(portName + "/FlowControl", "None").toString());
     hexReceiveCheckBox->setChecked(settings->value(portName + "/HexReceive", false).toBool());
     hexSendCheckBox->setChecked(settings->value(portName + "/HexSend", false).toBool());
+    sendNewRowCheckbox->setChecked(settings->value(portName + "/NewRow", false).toBool());
+
 }
 
 void SerialPortWidget::saveSettings()
@@ -311,6 +315,7 @@ void SerialPortWidget::saveSettings()
     settings->setValue("FlowControl", flowControlComboBox->currentText());
     settings->setValue("HexReceive", hexReceiveCheckBox->isChecked());
     settings->setValue("HexSend", hexSendCheckBox->isChecked());
+    settings->setValue("NewRow", sendNewRowCheckbox->isChecked());
     settings->endGroup();
     settings->sync();
 }
