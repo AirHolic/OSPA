@@ -62,6 +62,7 @@ private:
     QComboBox *flowControlComboBox; // 流控制
     QPushButton *connectButton;     // 连接/断开按钮
     QPushButton *sendButton;        // 发送按钮
+    QPushButton *searchButton;      //搜索按钮
     QPushButton *clearReceiveButton; // 清空接收区按钮
     QCheckBox *hexReceiveCheckBox;  // HEX 接收复选框
     QCheckBox *hexSendCheckBox;     // HEX 发送复选框

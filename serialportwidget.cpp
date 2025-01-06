@@ -166,7 +166,7 @@ void SerialPortWidget::initSearchDialog()
 
     // 添加 Ctrl+F 快捷键
     searchShortcut = new QShortcut(QKeySequence::Find, this);
-    connecthandle = connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
+    connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
 }
 
 void SerialPortWidget::toggleConnection()
