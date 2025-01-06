@@ -16,6 +16,10 @@ MainWindow::MainWindow(QWidget *parent)
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
     tabWidget->setTabsClosable(true);
+    tabWidget->setMovable(true);
+    tabWidget->setFocusPolicy(Qt::ClickFocus);
+
+    // 连接标签页关闭事件
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeSerialPort);
 
     // 连接标签页双击事件

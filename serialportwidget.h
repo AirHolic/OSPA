@@ -6,6 +6,7 @@
 #include <QSettings>
 #include <QDockWidget>
 
+class QVBoxLayout;
 class QTextEdit;
 class QComboBox;
 class QPushButton;
@@ -21,8 +22,6 @@ class SerialPortWidget : public QWidget
 public:
     explicit SerialPortWidget(const QString &portName, QWidget *parent = nullptr);
     ~SerialPortWidget();
-
-    void setDockWidget(QDockWidget *dockWidget); // 设置关联的 QDockWidget
 
 signals:
     void closeRequested(int index); // 请求关闭信号

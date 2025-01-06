@@ -12,6 +12,8 @@
 #include <QLabel>
 #include <QShortcut>
 #include <QDockWidget>
+#include <QEvent>
+#include <QDebug>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0), dockWidget(nullptr)
@@ -32,11 +34,14 @@ SerialPortWidget::~SerialPortWidget()
     delete serialPort;
 }
 
+/* Event */
+
 void SerialPortWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     if (searchDialog->getShowFlag() == true) {
         searchDialog->show(); // 显示搜索对话框
+        qDebug() << "show" << endl;
     }
 }
 
@@ -48,18 +53,16 @@ void SerialPortWidget::hideEvent(QHideEvent *event)
     }
 }
 
+/* Event */
+
 void SerialPortWidget::openSearchDialog()
 {
     if (searchDialog) {
         searchDialog->show(); // 显示搜索对话框
         searchDialog->activateWindow(); // 激活窗口
-        searchDialog->setShowFlag(true);// 设置显示标志
-    }
-}
+        searchDialog->setShowFlag(true); // 设置显示标志
 
-void SerialPortWidget::setDockWidget(QDockWidget *dockWidget)
-{
-    this->dockWidget = dockWidget;
+    }
 }
 
 void SerialPortWidget::initUI()
@@ -90,6 +93,7 @@ void SerialPortWidget::initUI()
     // 按钮
     connectButton = new QPushButton("Connect", this);
     sendButton = new QPushButton("Send", this);
+    searchButton = new QPushButton("Search", this);
     clearReceiveButton = new QPushButton("Clear Receive", this);
 
     // 复选框
@@ -119,6 +123,7 @@ void SerialPortWidget::initUI()
     receiveSideLayout->addLayout(settingsLayout);
     receiveSideLayout->addWidget(hexReceiveCheckBox);
     receiveSideLayout->addWidget(connectButton);
+    receiveSideLayout->addWidget(searchButton);
     receiveSideLayout->addWidget(clearReceiveButton);
 
     upLayout->addLayout(receiveSideLayout);
@@ -147,22 +152,21 @@ void SerialPortWidget::initConnections()
 {
     connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::toggleConnection);
     connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
+    connect(searchButton, &QPushButton::clicked, this, &SerialPortWidget::openSearchDialog);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
 }
 
 void SerialPortWidget::initSearchDialog()
 {
-    // 添加 Ctrl+F 快捷键
-    QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
-    connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
-
     // 初始化搜索对话框
     searchDialog = new SearchDialog(portName, receiveTextEdit, this);
-    searchDialog->setParent(this,searchDialog->windowFlags());
-    //searchDialog->setWindowFlag(Qt::Window, false); // 设置为非独立窗口
-    //searchDialog->setParent(this,searchDialog->windowFlags());
+    searchDialog->setParent(this, searchDialog->windowFlags());
     searchDialog->hide(); // 初始隐藏
-    searchDialog->setShowFlag(false);// 初始隐藏
+    searchDialog->setShowFlag(false); // 初始隐藏
+
+    // 添加 Ctrl+F 快捷键
+    searchShortcut = new QShortcut(QKeySequence::Find, this);
+    connecthandle = connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
 }
 
 void SerialPortWidget::toggleConnection()
@@ -177,7 +181,7 @@ void SerialPortWidget::toggleConnection()
 void SerialPortWidget::connectSerialPort()
 {
     serialPort = new QSerialPort(this);
-    serialPort->setPortName(portName);
+    serialPort->setPortName(portName.mid(0,portName.indexOf(" ")));
     serialPort->setBaudRate(baudRateComboBox->currentText().toInt());
     serialPort->setDataBits(static_cast<QSerialPort::DataBits>(dataBitsComboBox->currentText().toInt()));
     serialPort->setParity(static_cast<QSerialPort::Parity>(parityComboBox->currentIndex()));
