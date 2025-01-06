@@ -114,12 +114,12 @@ void MainWindow::onTabDockRequested(int index)
     if (widget) {
         // 创建 QDockWidget
         QDockWidget *dockWidget = new QDockWidget(tabWidget->tabText(index), this);
-        dockWidget->setAttribute(Qt::WA_DeleteOnClose);// 关闭时删除
-        dockWidget->setWidget(widget);
+        dockWidget->setAttribute(Qt::WA_DeleteOnClose); // 关闭时删除
+        dockWidget->setWidget(widget); // 将控件移动到 QDockWidget
         addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 
         // 移除标签页
-        tabWidget->removeTab(index);
+        //tabWidget->removeTab(index);
 
         // 连接窗口拖回事件
         connect(dockWidget, &QDockWidget::topLevelChanged, this, [this, dockWidget](bool topLevel) {
