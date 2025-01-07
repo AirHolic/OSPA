@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSerialPort>
 #include <QSettings>
+#include <QTabWidget>
 #include <QDockWidget>
 
 class QVBoxLayout;
@@ -53,6 +54,7 @@ private:
     QString portName;        // 串口名称
 
     // UI 元素
+    QTabWidget *sendTabWidget;          // 标签页控件
     QTextEdit *receiveTextEdit;     // 接收区
     QTextEdit *sendTextEdit;        // 发送区
     QComboBox *baudRateComboBox;    // 波特率

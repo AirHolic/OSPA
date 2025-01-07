@@ -71,7 +71,7 @@ void SerialPortWidget::initUI()
     receiveTextEdit = new QTextEdit(this);
     receiveTextEdit->setReadOnly(true);
 
-    // 发送区
+    // 单条发送区
     sendTextEdit = new QTextEdit(this);
 
     // 串口配置
@@ -103,6 +103,7 @@ void SerialPortWidget::initUI()
 
     // 状态栏
     statusLabel = new QLabel("Sent: 0 bytes | Received: 0 bytes", this);
+    statusLabel->setAlignment(Qt::AlignRight);
 
     // 布局
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -130,17 +131,28 @@ void SerialPortWidget::initUI()
 
     // 发送区和相关控件
     QHBoxLayout *downLayout = new QHBoxLayout;
-    downLayout->addWidget(sendTextEdit);
+    sendTabWidget = new QTabWidget(this);
+    downLayout->addWidget(sendTabWidget);
+
+    // 单条发送区
+    QWidget *singleSendWidget = new QWidget;
+    QHBoxLayout *singleSendLayout = new QHBoxLayout;
+    singleSendWidget->setLayout(singleSendLayout);
+    sendTabWidget->addTab(singleSendWidget, "Single");
+    singleSendLayout->addWidget(sendTextEdit);
 
     // 发送区侧边布局：十六进制发送勾选框和发送按钮
     QVBoxLayout *sendSideLayout = new QVBoxLayout;
     sendSideLayout->addWidget(hexSendCheckBox);
     sendSideLayout->addWidget(sendNewRowCheckbox);
     sendSideLayout->addWidget(sendButton);
+    singleSendLayout->addLayout(sendSideLayout);
 
-    downLayout->addLayout(sendSideLayout);
+    // // 多条发送区
+    // QWidget *multiSendWidget = new QWidget;
+    // QHBoxLayout *multiSendLayout = new QHBoxLayout;
 
-    // 将左右布局添加到主布局
+    // 将上下布局添加到主布局
     mainLayout->addLayout(upLayout);
     mainLayout->addLayout(downLayout);
 
@@ -323,5 +335,3 @@ void SerialPortWidget::saveSettings()
     settings->endGroup();
     settings->sync();
 }
-
-

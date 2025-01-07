@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(tabWidget);
     tabWidget->setTabsClosable(true);
     tabWidget->setMovable(true);
-    tabWidget->setFocusPolicy(Qt::ClickFocus);
 
     // 连接标签页关闭事件
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeSerialPort);
@@ -28,6 +27,12 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建工具栏
     QToolBar *toolBar = new QToolBar(this);
     addToolBar(toolBar);
+    toolBar->setMovable(false);                          
+
+    // // 添加串口工具按钮,十六进制转换，
+    // QAction *serialPortToolAction = new QAction("Tool", this);
+    // toolBar->addAction(serialPortToolAction);
+
 
     // 添加刷新串口列表按钮
     QAction *refreshAction = new QAction("Refresh Serial Ports", this);
