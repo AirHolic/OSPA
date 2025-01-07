@@ -2,15 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTabWidget>
-#include <QDockWidget>
 #include <QSerialPortInfo>
 #include <QComboBox>
-#include <QToolBar>
-#include <QAction>
+#include <QTabWidget>
+#include <QDockWidget>
 #include <QList>
-
-class SerialPortWidget;
+#include "serialportwidget.h"
 
 class MainWindow : public QMainWindow
 {

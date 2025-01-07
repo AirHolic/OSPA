@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowTitle("Serial Port Manager");
-    setMinimumSize(800,600);
+    setMinimumSize(800, 600);
 
     // 创建标签页控件
     tabWidget = new QTabWidget(this);
@@ -27,12 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建工具栏
     QToolBar *toolBar = new QToolBar(this);
     addToolBar(toolBar);
-    toolBar->setMovable(false);                          
-
-    // // 添加串口工具按钮,十六进制转换，
-    // QAction *serialPortToolAction = new QAction("Tool", this);
-    // toolBar->addAction(serialPortToolAction);
-
+    toolBar->setMovable(false);
 
     // 添加刷新串口列表按钮
     QAction *refreshAction = new QAction("Refresh Serial Ports", this);
@@ -65,7 +60,7 @@ void MainWindow::refreshSerialPorts()
     // 更新下拉框中的串口列表
     comboBoxSerialPorts->clear();
     for (const QSerialPortInfo &port : availablePorts) {
-        comboBoxSerialPorts->addItem(port.portName()+" "+port.description());
+        comboBoxSerialPorts->addItem(port.portName() + " " + port.description());
     }
 }
 
@@ -126,9 +121,6 @@ void MainWindow::onTabDockRequested(int index)
         dockWidget->setAttribute(Qt::WA_DeleteOnClose); // 关闭时删除
         dockWidget->setWidget(widget); // 将控件移动到 QDockWidget
         addDockWidget(Qt::RightDockWidgetArea, dockWidget);
-
-        // 移除标签页
-        //tabWidget->removeTab(index);
 
         // 连接窗口拖回事件
         connect(dockWidget, &QDockWidget::topLevelChanged, this, [this, dockWidget](bool topLevel) {

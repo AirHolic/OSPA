@@ -19,11 +19,13 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     searchdialog.cpp \
+    serialportmanager.cpp \
     serialportwidget.cpp
 
 HEADERS += \
     mainwindow.h \
     searchdialog.h \
+    serialportmanager.h \
     serialportwidget.h
 
 FORMS += \

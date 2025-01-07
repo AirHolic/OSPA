@@ -16,7 +16,7 @@
 #include <QDebug>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
-    : QWidget(parent), serialPort(nullptr), portName(portName), sentBytes(0), receivedBytes(0), dockWidget(nullptr)
+    : QWidget(parent), portName(portName), serialPortManager(new SerialPortManager(this)), sentBytes(0), receivedBytes(0)
 {
     settings = new QSettings("config.ini", QSettings::IniFormat, this);
     initUI();
@@ -28,10 +28,6 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
 SerialPortWidget::~SerialPortWidget()
 {
     saveSettings();
-    if (serialPort && serialPort->isOpen()) {
-        serialPort->close();
-    }
-    delete serialPort;
 }
 
 /* Event */
@@ -39,17 +35,18 @@ SerialPortWidget::~SerialPortWidget()
 void SerialPortWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
-    if (searchDialog->getShowFlag() == true) {
-        searchDialog->show(); // 显示搜索对话框
-        qDebug() << "show" << endl;
+    if (searchDialog->getShowFlag())
+    {
+        searchDialog->show();
     }
 }
 
 void SerialPortWidget::hideEvent(QHideEvent *event)
 {
     QWidget::hideEvent(event);
-    if (searchDialog) {
-        searchDialog->hide(); // 隐藏搜索对话框
+    if (searchDialog)
+    {
+        searchDialog->hide();
     }
 }
 
@@ -57,11 +54,11 @@ void SerialPortWidget::hideEvent(QHideEvent *event)
 
 void SerialPortWidget::openSearchDialog()
 {
-    if (searchDialog) {
-        searchDialog->show(); // 显示搜索对话框
-        searchDialog->activateWindow(); // 激活窗口
+    if (searchDialog)
+    {
+        searchDialog->show();            // 显示搜索对话框
+        searchDialog->activateWindow();  // 激活窗口
         searchDialog->setShowFlag(true); // 设置显示标志
-
     }
 }
 
@@ -166,6 +163,8 @@ void SerialPortWidget::initConnections()
     connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
     connect(searchButton, &QPushButton::clicked, this, &SerialPortWidget::openSearchDialog);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
+    connect(serialPortManager, &SerialPortManager::dataReceived, this, &SerialPortWidget::onDataReceived);
+    connect(serialPortManager, &SerialPortManager::errorOccurred, this, &SerialPortWidget::onErrorOccurred);
 }
 
 void SerialPortWidget::initSearchDialog()
@@ -173,7 +172,7 @@ void SerialPortWidget::initSearchDialog()
     // 初始化搜索对话框
     searchDialog = new SearchDialog(portName, receiveTextEdit, this);
     searchDialog->setParent(this, searchDialog->windowFlags());
-    searchDialog->hide(); // 初始隐藏
+    searchDialog->hide();             // 初始隐藏
     searchDialog->setShowFlag(false); // 初始隐藏
 
     // 添加 Ctrl+F 快捷键
@@ -183,110 +182,76 @@ void SerialPortWidget::initSearchDialog()
 
 void SerialPortWidget::toggleConnection()
 {
-    if (serialPort && serialPort->isOpen()) {
-        disconnectSerialPort();
-    } else {
-        connectSerialPort();
+    if (serialPortManager->isConnected())
+    {
+        serialPortManager->disconnectSerialPort();
+        connectButton->setText("Connect");
     }
-}
-
-void SerialPortWidget::connectSerialPort()
-{
-    serialPort = new QSerialPort(this);
-    serialPort->setPortName(portName.mid(0,portName.indexOf(" ")));
-    serialPort->setBaudRate(baudRateComboBox->currentText().toInt());
-    serialPort->setDataBits(static_cast<QSerialPort::DataBits>(dataBitsComboBox->currentText().toInt()));
-    serialPort->setParity(static_cast<QSerialPort::Parity>(parityComboBox->currentIndex()));
-    serialPort->setStopBits(static_cast<QSerialPort::StopBits>(stopBitsComboBox->currentIndex() + 1));
-    serialPort->setFlowControl(static_cast<QSerialPort::FlowControl>(flowControlComboBox->currentIndex()));
-
-    if (serialPort->open(QIODevice::ReadWrite)) {
-        connectButton->setText("Disconnect");
-        connect(serialPort, &QSerialPort::readyRead, this, &SerialPortWidget::receiveData);
-    } else {
-        QMessageBox::critical(this, "Error", "Failed to open serial port.");
+    else
+    {
+        if (serialPortManager->connectSerialPort(portName.mid(0, portName.indexOf(" ")),
+                                                 baudRateComboBox->currentText().toInt(),
+                                                 dataBitsComboBox->currentText().toInt(),
+                                                 parityComboBox->currentIndex(),
+                                                 stopBitsComboBox->currentIndex() + 1,
+                                                 flowControlComboBox->currentIndex()))
+        {
+            connectButton->setText("Disconnect");
+        }
     }
-}
-
-void SerialPortWidget::disconnectSerialPort()
-{
-    if (serialPort && serialPort->isOpen()) {
-        serialPort->close();
-    }
-    connectButton->setText("Connect");
 }
 
 void SerialPortWidget::sendData()
 {
-    if (serialPort && serialPort->isOpen()) {
-        QString dataStr = sendTextEdit->toPlainText();
-        if (dataStr.isEmpty()) {
-            QMessageBox::warning(this, "Warning", "Please enter data to send.");
+    QString dataStr = sendTextEdit->toPlainText();
+    if (dataStr.isEmpty())
+    {
+        QMessageBox::warning(this, "Warning", "Please enter data to send.");
+        return;
+    }
+
+    QByteArray data;
+    if (hexSendCheckBox->isChecked())
+    {
+        dataStr = dataStr.replace(" ", "").replace("\n", "");
+        QRegExp hexRegExp("^[0-9A-Fa-f]+$");
+        if (!hexRegExp.exactMatch(dataStr))
+        {
+            QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
             return;
         }
-
-        if (hexSendCheckBox->isChecked()) {
-            dataStr = dataStr.replace(" ", "").replace("\n", "");
-            QRegExp hexRegExp("^[0-9A-Fa-f]+$");
-            if (!hexRegExp.exactMatch(dataStr)) {
-                QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
-                return;
-            }
-            if (dataStr.length() % 2 != 0) {
-                dataStr.prepend("0");
-            }
-            QByteArray data = QByteArray::fromHex(dataStr.toUtf8());
-            if (sendNewRowCheckbox->isChecked()) {
-                data.append(0x0D).append(0x0A);
-            }
-            if (serialPort->write(data) == -1) {
-                QMessageBox::critical(this, "Error", "Failed to send data.");
-            } else {
-                sentBytes += data.size();
-                updateStatusLabel();
-                data = data.toHex().toUpper();
-                for (int i = 2; i < data.size(); i += 3) {
-                    data.insert(i, ' ');
-                }
-                logMessage("Sent: " + data);
-            }
-        } else {
-            if (sendNewRowCheckbox->isChecked()) {
-                dataStr.append(0x0D).append(0x0A);
-            }
-            QByteArray data = dataStr.toUtf8();
-            if (serialPort->write(data) == -1) {
-                QMessageBox::critical(this, "Error", "Failed to send data.");
-            } else {
-                sentBytes += data.size();
-                updateStatusLabel();
-                logMessage("Sent: " + dataStr);
-            }
+        if (dataStr.length() % 2 != 0)
+        {
+            dataStr.prepend("0");
         }
-    } else {
-        QMessageBox::warning(this, "Warning", "Serial port is not connected.");
+        data = QByteArray::fromHex(dataStr.toUtf8());
     }
+    else
+    {
+        data = dataStr.toUtf8();
+    }
+
+    if (sendNewRowCheckbox->isChecked())
+    {
+        data.append(0x0D).append(0x0A);
+    }
+
+    serialPortManager->sendData(data);
+    sentBytes += data.size();
+    updateStatusLabel();
+    logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
 }
 
-void SerialPortWidget::receiveData()
+void SerialPortWidget::onDataReceived(const QByteArray &data)
 {
-    if (serialPort && serialPort->isOpen()) {
-        QByteArray data;
-        while (serialPort->bytesAvailable() > 0) {// 串口数据接收while循环
-            data = serialPort->readAll();
-        }
-        receivedBytes += data.size();
-        updateStatusLabel();
-        if (hexReceiveCheckBox->isChecked()) {
-            data = data.toHex().toUpper();
-            for (int i = 2; i < data.size(); i += 3) {
-                data.insert(i, ' ');
-            }
-            logMessage("Recv: " + data);
-        } else {
-            logMessage("Recv: " + data);
-        }
-    }
+    receivedBytes += data.size();
+    updateStatusLabel();
+    logMessage("Recv: " + (hexReceiveCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
+}
+
+void SerialPortWidget::onErrorOccurred(const QString &error)
+{
+    QMessageBox::critical(this, "Error", error);
 }
 
 void SerialPortWidget::clearReceiveArea()
@@ -318,7 +283,6 @@ void SerialPortWidget::loadSettings()
     hexReceiveCheckBox->setChecked(settings->value(portName + "/HexReceive", false).toBool());
     hexSendCheckBox->setChecked(settings->value(portName + "/HexSend", false).toBool());
     sendNewRowCheckbox->setChecked(settings->value(portName + "/NewRow", false).toBool());
-
 }
 
 void SerialPortWidget::saveSettings()
