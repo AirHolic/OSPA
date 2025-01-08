@@ -21,20 +21,23 @@ SOURCES += \
     searchdialog.cpp \
     serialportmanager.cpp \
     serialportmultisendunit.cpp \
-    serialportwidget.cpp
+    serialportwidget.cpp \
+    serialprotocoltransmission.cpp
 
 HEADERS += \
     mainwindow.h \
     searchdialog.h \
     serialportmanager.h \
     serialportmultisendunit.h \
-    serialportwidget.h
+    serialportwidget.h \
+    serialprotocoltransmission.h
 
 FORMS += \
     mainwindow.ui \
     searchdialog.ui \
     serialportmultisendunit.ui \
-    serialportwidget.ui
+    serialportwidget.ui \
+    serialprotocoltransmission.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
