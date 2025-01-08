@@ -20,17 +20,20 @@ SOURCES += \
     mainwindow.cpp \
     searchdialog.cpp \
     serialportmanager.cpp \
+    serialportmultisendunit.cpp \
     serialportwidget.cpp
 
 HEADERS += \
     mainwindow.h \
     searchdialog.h \
     serialportmanager.h \
+    serialportmultisendunit.h \
     serialportwidget.h
 
 FORMS += \
     mainwindow.ui \
     searchdialog.ui \
+    serialportmultisendunit.ui \
     serialportwidget.ui
 
 # Default rules for deployment.

@@ -5,9 +5,12 @@
 #include <QSettings>
 #include <QSerialPort>
 #include "serialportmanager.h"
+#include "serialportmultisendunit.h"
 #include <QTabWidget>
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QTimer>
 
-class QVBoxLayout;
 class QTextEdit;
 class QComboBox;
 class QPushButton;
@@ -32,8 +35,12 @@ protected:
     void hideEvent(QHideEvent *event) override;
 
 private slots:
+    void sendAddUi(int index);
     void toggleConnection();
     void sendData();
+    void multiSendData(QString &dataStr);
+    void multiCycleTimer(int state);
+    void multiAutoSendData();
     void openSearchDialog();
     void clearReceiveArea();
     void onDataReceived(const QByteArray &data);
@@ -49,15 +56,23 @@ private:
     void logMessage(const QString &message);
 
     QString portName;
-    QSettings *settings;
+    QSettings *serialSettings;
+    QSettings *multiSendSettings;
     SerialPortManager *serialPortManager;
     qint64 sentBytes;
     qint64 receivedBytes;
 
+    QTimer *multiCycleSendTimer;
+    int unitId;
+
     // UI elements
+    QVBoxLayout *sendSideLayout;
+    QVBoxLayout *multiSendSideLayout;
+    QVBoxLayout *multiCycleSendSideLayout;
     QTabWidget *sendTabWidget;
     QTextEdit *receiveTextEdit;
     QTextEdit *sendTextEdit;
+    QLineEdit *multiCycleSendLineEdit;
     QComboBox *baudRateComboBox;
     QComboBox *dataBitsComboBox;
     QComboBox *parityComboBox;
@@ -70,9 +85,23 @@ private:
     QCheckBox *hexReceiveCheckBox;
     QCheckBox *hexSendCheckBox;
     QCheckBox *sendNewRowCheckbox;
+    QCheckBox *multiCycleSendCheckBox;
     QLabel *statusLabel;
+    QLabel *multiCycleSendLabel;
+    QLabel *multiCycleSendUnitLabel;
     SearchDialog *searchDialog;
     QShortcut *searchShortcut;
+
+    serialPortMultiSendUnit *multiSendUnit0;
+    serialPortMultiSendUnit *multiSendUnit1;
+    serialPortMultiSendUnit *multiSendUnit2;
+    serialPortMultiSendUnit *multiSendUnit3;
+    serialPortMultiSendUnit *multiSendUnit4;
+    serialPortMultiSendUnit *multiSendUnit5;
+    serialPortMultiSendUnit *multiSendUnit6;
+    serialPortMultiSendUnit *multiSendUnit7;
+    serialPortMultiSendUnit *multiSendUnit8;
+    serialPortMultiSendUnit *multiSendUnit9;
 };
 
 #endif // SERIALPORTWIDGET_H

@@ -1,5 +1,7 @@
 #include "serialportwidget.h"
 #include "searchdialog.h"
+#include <QGridLayout>
+#include "serialportmultisendunit.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -14,11 +16,13 @@
 #include <QDockWidget>
 #include <QEvent>
 #include <QDebug>
+#include <QValidator>
 
 SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     : QWidget(parent), portName(portName), serialPortManager(new SerialPortManager(this)), sentBytes(0), receivedBytes(0)
 {
-    settings = new QSettings("config.ini", QSettings::IniFormat, this);
+    serialSettings = new QSettings("serialconfig.ini", QSettings::IniFormat, this);
+    multiSendSettings = new QSettings("multisendconfig.ini", QSettings::IniFormat, this);
     initUI();
     initConnections();
     initSearchDialog();
@@ -139,15 +143,66 @@ void SerialPortWidget::initUI()
     singleSendLayout->addWidget(sendTextEdit);
 
     // 发送区侧边布局：十六进制发送勾选框和发送按钮
-    QVBoxLayout *sendSideLayout = new QVBoxLayout;
+    sendSideLayout = new QVBoxLayout;
     sendSideLayout->addWidget(hexSendCheckBox);
     sendSideLayout->addWidget(sendNewRowCheckbox);
     sendSideLayout->addWidget(sendButton);
     singleSendLayout->addLayout(sendSideLayout);
 
-    // // 多条发送区
-    // QWidget *multiSendWidget = new QWidget;
-    // QHBoxLayout *multiSendLayout = new QHBoxLayout;
+    // 多条发送区
+    QWidget *multiSendWidget = new QWidget;
+    QHBoxLayout *multiSendLayout = new QHBoxLayout;
+    QGridLayout *multiSendGridLayout = new QGridLayout;
+    multiSendSideLayout = new QVBoxLayout;
+    multiSendUnit0 = new serialPortMultiSendUnit(0);
+    multiSendUnit1 = new serialPortMultiSendUnit(1);
+    multiSendUnit2 = new serialPortMultiSendUnit(2);
+    multiSendUnit3 = new serialPortMultiSendUnit(3);
+    multiSendUnit4 = new serialPortMultiSendUnit(4);
+    multiSendUnit5 = new serialPortMultiSendUnit(5);
+    multiSendUnit6 = new serialPortMultiSendUnit(6);
+    multiSendUnit7 = new serialPortMultiSendUnit(7);
+    multiSendUnit8 = new serialPortMultiSendUnit(8);
+    multiSendUnit9 = new serialPortMultiSendUnit(9);
+    multiSendGridLayout->addWidget(multiSendUnit0, 0, 0);
+    multiSendGridLayout->addWidget(multiSendUnit1, 0, 1);
+    multiSendGridLayout->addWidget(multiSendUnit2, 1, 0);
+    multiSendGridLayout->addWidget(multiSendUnit3, 1, 1);
+    multiSendGridLayout->addWidget(multiSendUnit4, 2, 0);
+    multiSendGridLayout->addWidget(multiSendUnit5, 2, 1);
+    multiSendGridLayout->addWidget(multiSendUnit6, 3, 0);
+    multiSendGridLayout->addWidget(multiSendUnit7, 3, 1);
+    multiSendGridLayout->addWidget(multiSendUnit8, 4, 0);
+    multiSendGridLayout->addWidget(multiSendUnit9, 4, 1);
+    multiSendLayout->addLayout(multiSendGridLayout);
+    multiSendWidget->setLayout(multiSendLayout);
+    sendTabWidget->addTab(multiSendWidget, "Multi");
+
+    // 多条发送区侧边布局
+    multiCycleSendSideLayout = new QVBoxLayout;
+    QHBoxLayout *multiCycleSendLayout = new QHBoxLayout;
+
+    multiCycleSendCheckBox = new QCheckBox("Cycle Send", this);
+    multiCycleSendLineEdit = new QLineEdit(this);
+    multiCycleSendLineEdit->setText("1000");
+    multiCycleSendLineEdit->setValidator(new QIntValidator(1, 1000, this));
+    multiCycleSendLabel = new QLabel("cycle", this);
+    multiCycleSendUnitLabel = new QLabel("ms", this);
+
+    multiCycleSendSideLayout->addWidget(multiCycleSendCheckBox);
+    multiCycleSendLayout->addWidget(multiCycleSendLabel);
+    multiCycleSendLayout->addWidget(multiCycleSendLineEdit);
+    multiCycleSendLayout->addWidget(multiCycleSendUnitLabel);
+    multiCycleSendSideLayout->addLayout(multiCycleSendLayout);
+    multiSendSideLayout->addLayout(multiCycleSendSideLayout);
+
+    multiSendLayout->addLayout(multiSendSideLayout);
+
+    // ymodem发送区
+    QWidget *ymodemSendWidget = new QWidget;
+    sendTabWidget->addTab(ymodemSendWidget, "YModem");
+
+    
 
     // 将上下布局添加到主布局
     mainLayout->addLayout(upLayout);
@@ -155,16 +210,60 @@ void SerialPortWidget::initUI()
 
     // 添加底部栏
     mainLayout->addWidget(statusLabel);
+
+    // 未连接时禁用相关控件
+    multiCycleSendCheckBox->setEnabled(false);
+    sendButton->setEnabled(false);
+    multiSendUnit0->getPushButton()->setEnabled(false);
+    multiSendUnit1->getPushButton()->setEnabled(false);
+    multiSendUnit2->getPushButton()->setEnabled(false);
+    multiSendUnit3->getPushButton()->setEnabled(false);
+    multiSendUnit4->getPushButton()->setEnabled(false);
+    multiSendUnit5->getPushButton()->setEnabled(false);
+    multiSendUnit6->getPushButton()->setEnabled(false);
+    multiSendUnit7->getPushButton()->setEnabled(false);
+    multiSendUnit8->getPushButton()->setEnabled(false);
+    multiSendUnit9->getPushButton()->setEnabled(false);
+}
+
+void SerialPortWidget::sendAddUi(int index)
+{
+    if(index == 0)
+    {
+        sendSideLayout->addWidget(hexSendCheckBox);
+        sendSideLayout->addWidget(sendNewRowCheckbox);
+        sendSideLayout->addWidget(sendButton);
+    }
+    else if(index == 1)
+    {
+        multiSendSideLayout->addWidget(hexSendCheckBox);
+        multiSendSideLayout->addWidget(sendNewRowCheckbox);
+        multiSendSideLayout->removeItem(multiCycleSendSideLayout);
+        multiSendSideLayout->addLayout(multiCycleSendSideLayout);
+    }
 }
 
 void SerialPortWidget::initConnections()
 {
+    connect(sendTabWidget, &QTabWidget::currentChanged, this, &SerialPortWidget::sendAddUi);
     connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::toggleConnection);
     connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
     connect(searchButton, &QPushButton::clicked, this, &SerialPortWidget::openSearchDialog);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
     connect(serialPortManager, &SerialPortManager::dataReceived, this, &SerialPortWidget::onDataReceived);
     connect(serialPortManager, &SerialPortManager::errorOccurred, this, &SerialPortWidget::onErrorOccurred);
+    connect(multiCycleSendCheckBox, &QCheckBox::stateChanged, this, &SerialPortWidget::multiCycleTimer);
+
+    connect(multiSendUnit0, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit1, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit2, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit3, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit4, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit5, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit6, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit7, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit8, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit9, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
 }
 
 void SerialPortWidget::initSearchDialog()
@@ -184,8 +283,24 @@ void SerialPortWidget::toggleConnection()
 {
     if (serialPortManager->isConnected())
     {
+        multiCycleSendCheckBox->setChecked(false);
+        multiCycleSendCheckBox->setEnabled(false);
+
         serialPortManager->disconnectSerialPort();
         connectButton->setText("Connect");
+
+        sendButton->setEnabled(false);
+        multiSendUnit0->getPushButton()->setEnabled(false);
+        multiSendUnit1->getPushButton()->setEnabled(false);
+        multiSendUnit2->getPushButton()->setEnabled(false);
+        multiSendUnit3->getPushButton()->setEnabled(false);
+        multiSendUnit4->getPushButton()->setEnabled(false);
+        multiSendUnit5->getPushButton()->setEnabled(false);
+        multiSendUnit6->getPushButton()->setEnabled(false);
+        multiSendUnit7->getPushButton()->setEnabled(false);
+        multiSendUnit8->getPushButton()->setEnabled(false);
+        multiSendUnit9->getPushButton()->setEnabled(false);
+
     }
     else
     {
@@ -197,19 +312,26 @@ void SerialPortWidget::toggleConnection()
                                                  flowControlComboBox->currentIndex()))
         {
             connectButton->setText("Disconnect");
+
+            sendButton->setEnabled(true);
+            multiSendUnit0->getPushButton()->setEnabled(true);
+            multiSendUnit1->getPushButton()->setEnabled(true);
+            multiSendUnit2->getPushButton()->setEnabled(true);
+            multiSendUnit3->getPushButton()->setEnabled(true);
+            multiSendUnit4->getPushButton()->setEnabled(true);
+            multiSendUnit5->getPushButton()->setEnabled(true);
+            multiSendUnit6->getPushButton()->setEnabled(true);
+            multiSendUnit7->getPushButton()->setEnabled(true);
+            multiSendUnit8->getPushButton()->setEnabled(true);
+            multiSendUnit9->getPushButton()->setEnabled(true);
+
+            multiCycleSendCheckBox->setEnabled(true);
         }
     }
 }
 
-void SerialPortWidget::sendData()
+void SerialPortWidget::multiSendData(QString &dataStr)
 {
-    QString dataStr = sendTextEdit->toPlainText();
-    if (dataStr.isEmpty())
-    {
-        QMessageBox::warning(this, "Warning", "Please enter data to send.");
-        return;
-    }
-
     QByteArray data;
     if (hexSendCheckBox->isChecked())
     {
@@ -240,6 +362,160 @@ void SerialPortWidget::sendData()
     sentBytes += data.size();
     updateStatusLabel();
     logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
+}
+
+void SerialPortWidget::sendData()
+{
+    QString dataStr = sendTextEdit->toPlainText();
+    QByteArray data;
+    if (hexSendCheckBox->isChecked())
+    {
+        dataStr = dataStr.replace(" ", "").replace("\n", "");
+        QRegExp hexRegExp("^[0-9A-Fa-f]+$");
+        if (!hexRegExp.exactMatch(dataStr))
+        {
+            QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
+            return;
+        }
+        if (dataStr.length() % 2 != 0)
+        {
+            dataStr.prepend("0");
+        }
+        data = QByteArray::fromHex(dataStr.toUtf8());
+    }
+    else
+    {
+        data = dataStr.toUtf8();
+    }
+
+    if (sendNewRowCheckbox->isChecked())
+    {
+        data.append(0x0D).append(0x0A);
+    }
+
+    serialPortManager->sendData(data);
+    sentBytes += data.size();
+    updateStatusLabel();
+    logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
+}
+
+void SerialPortWidget::multiCycleTimer(int state)
+{
+    if (state == Qt::Checked)
+    {
+        if (multiCycleSendLineEdit->text().isEmpty())
+        {
+            QMessageBox::warning(this, "Warning", "Please enter cycle time.");
+            multiCycleSendCheckBox->setChecked(false);
+            return;
+        }
+
+        multiCycleSendLineEdit->setReadOnly(true);
+        multiCycleSendLabel->setEnabled(false);
+        multiCycleSendUnitLabel->setEnabled(false);
+
+        multiCycleSendTimer = new QTimer(this);
+        multiCycleSendTimer->setInterval(multiCycleSendLineEdit->text().toInt());
+        connect(multiCycleSendTimer, &QTimer::timeout, this, &SerialPortWidget::multiAutoSendData);
+        multiCycleSendTimer->start();
+    }
+    else
+    {
+        multiCycleSendLineEdit->setReadOnly(false);
+        multiCycleSendLabel->setEnabled(true);
+        multiCycleSendUnitLabel->setEnabled(true);
+
+        if (multiCycleSendTimer)
+        {
+            multiCycleSendTimer->stop();
+            multiCycleSendTimer->deleteLater();
+        }
+    }
+
+}
+
+void SerialPortWidget::multiAutoSendData()
+{
+    switch (unitId)
+    {//相关警告为故意不加break,可无视
+    case 0:
+        if(multiSendUnit0->getCheckBoxStatus() == true)
+        {
+            multiSendUnit0->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 1:
+        if(multiSendUnit1->getCheckBoxStatus() == true)
+        {
+            multiSendUnit1->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 2:
+        if(multiSendUnit2->getCheckBoxStatus() == true)
+        {
+            multiSendUnit2->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 3:
+        if(multiSendUnit3->getCheckBoxStatus() == true)
+        {
+            multiSendUnit3->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 4:
+        if(multiSendUnit4->getCheckBoxStatus() == true)
+        {
+            multiSendUnit4->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 5:
+        if(multiSendUnit5->getCheckBoxStatus() == true)
+        {
+            multiSendUnit5->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 6:
+        if(multiSendUnit6->getCheckBoxStatus() == true)
+        {
+            multiSendUnit6->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 7:
+        if(multiSendUnit7->getCheckBoxStatus() == true)
+        {
+            multiSendUnit7->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 8:
+        if(multiSendUnit8->getCheckBoxStatus() == true)
+        {
+            multiSendUnit8->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    case 9:
+        if(multiSendUnit9->getCheckBoxStatus() == true)
+        {
+            multiSendUnit9->getPushButton()->click();
+            break;
+        }
+        unitId++;
+    default:
+        break;
+    }
+    unitId++;
+    if(unitId>9)
+    {
+        unitId = 0;
+    }
 }
 
 void SerialPortWidget::onDataReceived(const QByteArray &data)
@@ -275,27 +551,93 @@ void SerialPortWidget::logMessage(const QString &message)
 
 void SerialPortWidget::loadSettings()
 {
-    baudRateComboBox->setCurrentText(settings->value(portName + "/BaudRate", "9600").toString());
-    dataBitsComboBox->setCurrentText(settings->value(portName + "/DataBits", "8").toString());
-    parityComboBox->setCurrentText(settings->value(portName + "/Parity", "None").toString());
-    stopBitsComboBox->setCurrentText(settings->value(portName + "/StopBits", "1").toString());
-    flowControlComboBox->setCurrentText(settings->value(portName + "/FlowControl", "None").toString());
-    hexReceiveCheckBox->setChecked(settings->value(portName + "/HexReceive", false).toBool());
-    hexSendCheckBox->setChecked(settings->value(portName + "/HexSend", false).toBool());
-    sendNewRowCheckbox->setChecked(settings->value(portName + "/NewRow", false).toBool());
+    baudRateComboBox->setCurrentText(serialSettings->value(portName + "/BaudRate", "9600").toString());
+    dataBitsComboBox->setCurrentText(serialSettings->value(portName + "/DataBits", "8").toString());
+    parityComboBox->setCurrentText(serialSettings->value(portName + "/Parity", "None").toString());
+    stopBitsComboBox->setCurrentText(serialSettings->value(portName + "/StopBits", "1").toString());
+    flowControlComboBox->setCurrentText(serialSettings->value(portName + "/FlowControl", "None").toString());
+    hexReceiveCheckBox->setChecked(serialSettings->value(portName + "/HexReceive", false).toBool());
+    hexSendCheckBox->setChecked(serialSettings->value(portName + "/HexSend", false).toBool());
+    sendNewRowCheckbox->setChecked(serialSettings->value(portName + "/NewRow", false).toBool());
+
+    multiSendUnit0->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit0", "").toString());
+    multiSendUnit0->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit0/CheckBox", false).toBool());
+
+    multiSendUnit1->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit1", "").toString());
+    multiSendUnit1->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit1/CheckBox", false).toBool());
+
+    multiSendUnit2->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit2", "").toString());
+    multiSendUnit2->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit2/CheckBox", false).toBool());
+
+    multiSendUnit3->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit3", "").toString());
+    multiSendUnit3->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit3/CheckBox", false).toBool());
+
+    multiSendUnit4->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit4", "").toString());
+    multiSendUnit4->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit4/CheckBox", false).toBool());
+
+    multiSendUnit5->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit5", "").toString());
+    multiSendUnit5->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit5/CheckBox", false).toBool());
+
+    multiSendUnit6->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit6", "").toString());
+    multiSendUnit6->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit6/CheckBox", false).toBool());
+
+    multiSendUnit7->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit7", "").toString());
+    multiSendUnit7->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit7/CheckBox", false).toBool());
+
+    multiSendUnit8->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit8", "").toString());
+    multiSendUnit8->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit8/CheckBox", false).toBool());
+
+    multiSendUnit9->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit9", "").toString());
+    multiSendUnit9->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit9/CheckBox", false).toBool());
+
 }
 
 void SerialPortWidget::saveSettings()
 {
-    settings->beginGroup(portName);
-    settings->setValue("BaudRate", baudRateComboBox->currentText());
-    settings->setValue("DataBits", dataBitsComboBox->currentText());
-    settings->setValue("Parity", parityComboBox->currentText());
-    settings->setValue("StopBits", stopBitsComboBox->currentText());
-    settings->setValue("FlowControl", flowControlComboBox->currentText());
-    settings->setValue("HexReceive", hexReceiveCheckBox->isChecked());
-    settings->setValue("HexSend", hexSendCheckBox->isChecked());
-    settings->setValue("NewRow", sendNewRowCheckbox->isChecked());
-    settings->endGroup();
-    settings->sync();
+    serialSettings->beginGroup(portName);
+    serialSettings->setValue("BaudRate", baudRateComboBox->currentText());
+    serialSettings->setValue("DataBits", dataBitsComboBox->currentText());
+    serialSettings->setValue("Parity", parityComboBox->currentText());
+    serialSettings->setValue("StopBits", stopBitsComboBox->currentText());
+    serialSettings->setValue("FlowControl", flowControlComboBox->currentText());
+    serialSettings->setValue("HexReceive", hexReceiveCheckBox->isChecked());
+    serialSettings->setValue("HexSend", hexSendCheckBox->isChecked());
+    serialSettings->setValue("NewRow", sendNewRowCheckbox->isChecked());
+    serialSettings->endGroup();
+    serialSettings->sync();
+
+    multiSendSettings->beginGroup(portName);
+
+    multiSendSettings->setValue("Unit0", multiSendUnit0->getLineText());
+    multiSendSettings->setValue("Unit0/CheckBox", multiSendUnit0->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit1", multiSendUnit1->getLineText());
+    multiSendSettings->setValue("Unit1/CheckBox", multiSendUnit1->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit2", multiSendUnit2->getLineText());
+    multiSendSettings->setValue("Unit2/CheckBox", multiSendUnit2->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit3", multiSendUnit3->getLineText());
+    multiSendSettings->setValue("Unit3/CheckBox", multiSendUnit3->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit4", multiSendUnit4->getLineText());
+    multiSendSettings->setValue("Unit4/CheckBox", multiSendUnit4->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit5", multiSendUnit5->getLineText());
+    multiSendSettings->setValue("Unit5/CheckBox", multiSendUnit5->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit6", multiSendUnit6->getLineText());
+    multiSendSettings->setValue("Unit6/CheckBox", multiSendUnit6->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit7", multiSendUnit7->getLineText());
+    multiSendSettings->setValue("Unit7/CheckBox", multiSendUnit7->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit8", multiSendUnit8->getLineText());
+    multiSendSettings->setValue("Unit8/CheckBox", multiSendUnit8->getCheckBoxStatus());
+
+    multiSendSettings->setValue("Unit9", multiSendUnit9->getLineText());
+    multiSendSettings->setValue("Unit9/CheckBox", multiSendUnit9->getCheckBoxStatus());
+
+    multiSendSettings->endGroup();
+    multiSendSettings->sync();
 }
