@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "serialportwidget.h"
+#include "serialwidget.h"
 #include <QToolBar>
 #include <QMessageBox>
 #include <QDebug>
@@ -94,19 +94,19 @@ void MainWindow::openSerialPort()
     }
 
     // 创建新的串口控件
-    SerialPortWidget *widget = new SerialPortWidget(selectedPort, this);
+    SerialWidget *widget = new SerialWidget(selectedPort, this);
     tabWidget->addTab(widget, selectedPort);
     serialPortWidgets.append(widget);
     tabWidget->setCurrentWidget(widget);
 
     // 连接关闭信号
-    connect(widget, &SerialPortWidget::closeRequested, this, &MainWindow::closeSerialPort);
+    connect(widget, &SerialWidget::closeRequested, this, &MainWindow::closeSerialPort);
 }
 
 void MainWindow::closeSerialPort(int index)
 {
     if (index >= 0 && index < tabWidget->count()) {
-        SerialPortWidget *widget = serialPortWidgets.takeAt(index);
+        SerialWidget *widget = serialPortWidgets.takeAt(index);
         tabWidget->removeTab(index);
         delete widget;
     }

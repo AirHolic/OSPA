@@ -7,7 +7,7 @@
 #include <QTabWidget>
 #include <QDockWidget>
 #include <QList>
-#include "serialportwidget.h"
+#include "serialwidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -27,7 +27,7 @@ private slots:
 private:
     QTabWidget *tabWidget; // 标签页控件
     QComboBox *comboBoxSerialPorts; // 串口选择下拉框
-    QList<SerialPortWidget *> serialPortWidgets; // 串口控件列表
+    QList<SerialWidget *> serialPortWidgets; // 串口控件列表
     QList<QSerialPortInfo> availablePorts; // 可用串口列表
 };
 

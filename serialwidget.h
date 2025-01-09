@@ -1,11 +1,11 @@
-#ifndef SERIALPORTWIDGET_H
-#define SERIALPORTWIDGET_H
+#ifndef SERIALWIDGET_H
+#define SERIALWIDGET_H
 
 #include <QWidget>
 #include <QSettings>
 #include <QSerialPort>
-#include "serialportmanager.h"
-#include "serialportmultisendunit.h"
+#include "serialmanager.h"
+#include "serialmultisendunit.h"
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <QLineEdit>
@@ -19,13 +19,13 @@ class QLabel;
 class QShortcut;
 class SearchDialog;
 
-class SerialPortWidget : public QWidget
+class SerialWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit SerialPortWidget(const QString &portName, QWidget *parent = nullptr);
-    ~SerialPortWidget();
+    explicit SerialWidget(const QString &portName, QWidget *parent = nullptr);
+    ~SerialWidget();
 
 signals:
     void closeRequested(int index); // 请求关闭信号
@@ -58,7 +58,7 @@ private:
     QString portName;
     QSettings *serialSettings;
     QSettings *multiSendSettings;
-    SerialPortManager *serialPortManager;
+    SerialManager *serialPortManager;
     qint64 sentBytes;
     qint64 receivedBytes;
 
@@ -92,16 +92,16 @@ private:
     SearchDialog *searchDialog;
     QShortcut *searchShortcut;
 
-    serialPortMultiSendUnit *multiSendUnit0;
-    serialPortMultiSendUnit *multiSendUnit1;
-    serialPortMultiSendUnit *multiSendUnit2;
-    serialPortMultiSendUnit *multiSendUnit3;
-    serialPortMultiSendUnit *multiSendUnit4;
-    serialPortMultiSendUnit *multiSendUnit5;
-    serialPortMultiSendUnit *multiSendUnit6;
-    serialPortMultiSendUnit *multiSendUnit7;
-    serialPortMultiSendUnit *multiSendUnit8;
-    serialPortMultiSendUnit *multiSendUnit9;
+    serialMultiSendUnit *multiSendUnit0;
+    serialMultiSendUnit *multiSendUnit1;
+    serialMultiSendUnit *multiSendUnit2;
+    serialMultiSendUnit *multiSendUnit3;
+    serialMultiSendUnit *multiSendUnit4;
+    serialMultiSendUnit *multiSendUnit5;
+    serialMultiSendUnit *multiSendUnit6;
+    serialMultiSendUnit *multiSendUnit7;
+    serialMultiSendUnit *multiSendUnit8;
+    serialMultiSendUnit *multiSendUnit9;
 };
 
-#endif // SERIALPORTWIDGET_H
+#endif // SERIALWIDGET_H

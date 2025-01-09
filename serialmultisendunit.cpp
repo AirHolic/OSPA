@@ -1,10 +1,10 @@
-#include "serialportmultisendunit.h"
+#include "serialmultisendunit.h"
 #include <QHBoxLayout>
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QPushButton>
 
-serialPortMultiSendUnit::serialPortMultiSendUnit(const int &unitId, QWidget *parent)
+serialMultiSendUnit::serialMultiSendUnit(const int &unitId, QWidget *parent)
     : QWidget(parent), unitId(unitId)
 {
     QHBoxLayout *multiSendUnit = new QHBoxLayout(this);
@@ -19,37 +19,37 @@ serialPortMultiSendUnit::serialPortMultiSendUnit(const int &unitId, QWidget *par
         emit returnPushButton();
     });
 }
-serialPortMultiSendUnit::~serialPortMultiSendUnit()
+serialMultiSendUnit::~serialMultiSendUnit()
 {
 
 }
 
-QString serialPortMultiSendUnit::getLineText()
+QString serialMultiSendUnit::getLineText()
 {
     return multiSendUnitLineEdit->text();
 }
 
-bool serialPortMultiSendUnit::getCheckBoxStatus()
+bool serialMultiSendUnit::getCheckBoxStatus()
 {
     return multiSendUnitCheckBox->checkState();
 }
 
-QLineEdit *serialPortMultiSendUnit::getLineEdit()
+QLineEdit *serialMultiSendUnit::getLineEdit()
 {
     return multiSendUnitLineEdit;
 }
 
-QCheckBox *serialPortMultiSendUnit::getCheckBox()
+QCheckBox *serialMultiSendUnit::getCheckBox()
 {
     return multiSendUnitCheckBox;
 }
 
-QPushButton *serialPortMultiSendUnit::getPushButton()
+QPushButton *serialMultiSendUnit::getPushButton()
 {
     return multiSendUnitPushButton;
 }
 
-void serialPortMultiSendUnit::returnPushButton()
+void serialMultiSendUnit::returnPushButton()
 {
     QString dataStr = getLineText();
     emit clickPushButton(dataStr);

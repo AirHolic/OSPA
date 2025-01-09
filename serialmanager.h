@@ -1,17 +1,17 @@
-#ifndef SERIALPORTMANAGER_H
-#define SERIALPORTMANAGER_H
+#ifndef SERIALMANAGER_H
+#define SERIALMANAGER_H
 
 #include <QObject>
 #include <QSerialPort>
 #include <QByteArray>
 
-class SerialPortManager : public QObject
+class SerialManager : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SerialPortManager(QObject *parent = nullptr);
-    ~SerialPortManager();
+    explicit SerialManager(QObject *parent = nullptr);
+    ~SerialManager();
 
     bool connectSerialPort(const QString &portName, int baudRate, int dataBits, int parity, int stopBits, int flowControl);
     void disconnectSerialPort();
@@ -28,4 +28,4 @@ private:
     QSerialPort *serialPort;
 };
 
-#endif // SERIALPORTMANAGER_H
+#endif // SERIALMANAGER_H

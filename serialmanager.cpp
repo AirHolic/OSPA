@@ -1,19 +1,19 @@
-#include "serialportmanager.h"
+#include "serialmanager.h"
 
-SerialPortManager::SerialPortManager(QObject *parent) : QObject(parent), serialPort(new QSerialPort(this))
+SerialManager::SerialManager(QObject *parent) : QObject(parent), serialPort(new QSerialPort(this))
 {
     connect(serialPort, &QSerialPort::readyRead, this, [this]() {
         emit dataReceived(receiveData());
     });
 }
 
-SerialPortManager::~SerialPortManager()
+SerialManager::~SerialManager()
 {
     disconnectSerialPort();
     delete serialPort;
 }
 
-bool SerialPortManager::connectSerialPort(const QString &portName, int baudRate, int dataBits, int parity, int stopBits, int flowControl)
+bool SerialManager::connectSerialPort(const QString &portName, int baudRate, int dataBits, int parity, int stopBits, int flowControl)
 {
     serialPort->setPortName(portName);
     serialPort->setBaudRate(baudRate);
@@ -30,19 +30,19 @@ bool SerialPortManager::connectSerialPort(const QString &portName, int baudRate,
     }
 }
 
-void SerialPortManager::disconnectSerialPort()
+void SerialManager::disconnectSerialPort()
 {
     if (serialPort->isOpen()) {
         serialPort->close();
     }
 }
 
-bool SerialPortManager::isConnected() const
+bool SerialManager::isConnected() const
 {
     return serialPort->isOpen();
 }
 
-void SerialPortManager::sendData(const QByteArray &data)
+void SerialManager::sendData(const QByteArray &data)
 {
     if (serialPort->isOpen()) {
         if (serialPort->write(data) == -1) {
@@ -53,7 +53,7 @@ void SerialPortManager::sendData(const QByteArray &data)
     }
 }
 
-QByteArray SerialPortManager::receiveData()
+QByteArray SerialManager::receiveData()
 {
     QByteArray data;
     while (serialPort->bytesAvailable() > 0) {

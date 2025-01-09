@@ -1,7 +1,7 @@
-#include "serialportwidget.h"
+#include "serialwidget.h"
 #include "searchdialog.h"
 #include <QGridLayout>
-#include "serialportmultisendunit.h"
+#include "serialmultisendunit.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -18,8 +18,8 @@
 #include <QDebug>
 #include <QValidator>
 
-SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
-    : QWidget(parent), portName(portName), serialPortManager(new SerialPortManager(this)), sentBytes(0), receivedBytes(0)
+SerialWidget::SerialWidget(const QString &portName, QWidget *parent)
+    : QWidget(parent), portName(portName), serialPortManager(new SerialManager(this)), sentBytes(0), receivedBytes(0)
 {
     serialSettings = new QSettings("serialconfig.ini", QSettings::IniFormat, this);
     multiSendSettings = new QSettings("multisendconfig.ini", QSettings::IniFormat, this);
@@ -29,14 +29,14 @@ SerialPortWidget::SerialPortWidget(const QString &portName, QWidget *parent)
     loadSettings();
 }
 
-SerialPortWidget::~SerialPortWidget()
+SerialWidget::~SerialWidget()
 {
     saveSettings();
 }
 
 /* Event */
 
-void SerialPortWidget::showEvent(QShowEvent *event)
+void SerialWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     if (searchDialog->getShowFlag())
@@ -45,7 +45,7 @@ void SerialPortWidget::showEvent(QShowEvent *event)
     }
 }
 
-void SerialPortWidget::hideEvent(QHideEvent *event)
+void SerialWidget::hideEvent(QHideEvent *event)
 {
     QWidget::hideEvent(event);
     if (searchDialog)
@@ -56,7 +56,7 @@ void SerialPortWidget::hideEvent(QHideEvent *event)
 
 /* Event */
 
-void SerialPortWidget::openSearchDialog()
+void SerialWidget::openSearchDialog()
 {
     if (searchDialog)
     {
@@ -66,7 +66,7 @@ void SerialPortWidget::openSearchDialog()
     }
 }
 
-void SerialPortWidget::initUI()
+void SerialWidget::initUI()
 {
     // 接收区
     receiveTextEdit = new QTextEdit(this);
@@ -154,16 +154,16 @@ void SerialPortWidget::initUI()
     QHBoxLayout *multiSendLayout = new QHBoxLayout;
     QGridLayout *multiSendGridLayout = new QGridLayout;
     multiSendSideLayout = new QVBoxLayout;
-    multiSendUnit0 = new serialPortMultiSendUnit(0);
-    multiSendUnit1 = new serialPortMultiSendUnit(1);
-    multiSendUnit2 = new serialPortMultiSendUnit(2);
-    multiSendUnit3 = new serialPortMultiSendUnit(3);
-    multiSendUnit4 = new serialPortMultiSendUnit(4);
-    multiSendUnit5 = new serialPortMultiSendUnit(5);
-    multiSendUnit6 = new serialPortMultiSendUnit(6);
-    multiSendUnit7 = new serialPortMultiSendUnit(7);
-    multiSendUnit8 = new serialPortMultiSendUnit(8);
-    multiSendUnit9 = new serialPortMultiSendUnit(9);
+    multiSendUnit0 = new serialMultiSendUnit(0);
+    multiSendUnit1 = new serialMultiSendUnit(1);
+    multiSendUnit2 = new serialMultiSendUnit(2);
+    multiSendUnit3 = new serialMultiSendUnit(3);
+    multiSendUnit4 = new serialMultiSendUnit(4);
+    multiSendUnit5 = new serialMultiSendUnit(5);
+    multiSendUnit6 = new serialMultiSendUnit(6);
+    multiSendUnit7 = new serialMultiSendUnit(7);
+    multiSendUnit8 = new serialMultiSendUnit(8);
+    multiSendUnit9 = new serialMultiSendUnit(9);
     multiSendGridLayout->addWidget(multiSendUnit0, 0, 0);
     multiSendGridLayout->addWidget(multiSendUnit1, 0, 1);
     multiSendGridLayout->addWidget(multiSendUnit2, 1, 0);
@@ -226,7 +226,7 @@ void SerialPortWidget::initUI()
     multiSendUnit9->getPushButton()->setEnabled(false);
 }
 
-void SerialPortWidget::sendAddUi(int index)
+void SerialWidget::sendAddUi(int index)
 {
     if(index == 0)
     {
@@ -243,30 +243,30 @@ void SerialPortWidget::sendAddUi(int index)
     }
 }
 
-void SerialPortWidget::initConnections()
+void SerialWidget::initConnections()
 {
-    connect(sendTabWidget, &QTabWidget::currentChanged, this, &SerialPortWidget::sendAddUi);
-    connect(connectButton, &QPushButton::clicked, this, &SerialPortWidget::toggleConnection);
-    connect(sendButton, &QPushButton::clicked, this, &SerialPortWidget::sendData);
-    connect(searchButton, &QPushButton::clicked, this, &SerialPortWidget::openSearchDialog);
-    connect(clearReceiveButton, &QPushButton::clicked, this, &SerialPortWidget::clearReceiveArea);
-    connect(serialPortManager, &SerialPortManager::dataReceived, this, &SerialPortWidget::onDataReceived);
-    connect(serialPortManager, &SerialPortManager::errorOccurred, this, &SerialPortWidget::onErrorOccurred);
-    connect(multiCycleSendCheckBox, &QCheckBox::stateChanged, this, &SerialPortWidget::multiCycleTimer);
+    connect(sendTabWidget, &QTabWidget::currentChanged, this, &SerialWidget::sendAddUi);
+    connect(connectButton, &QPushButton::clicked, this, &SerialWidget::toggleConnection);
+    connect(sendButton, &QPushButton::clicked, this, &SerialWidget::sendData);
+    connect(searchButton, &QPushButton::clicked, this, &SerialWidget::openSearchDialog);
+    connect(clearReceiveButton, &QPushButton::clicked, this, &SerialWidget::clearReceiveArea);
+    connect(serialPortManager, &SerialManager::dataReceived, this, &SerialWidget::onDataReceived);
+    connect(serialPortManager, &SerialManager::errorOccurred, this, &SerialWidget::onErrorOccurred);
+    connect(multiCycleSendCheckBox, &QCheckBox::stateChanged, this, &SerialWidget::multiCycleTimer);
 
-    connect(multiSendUnit0, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit1, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit2, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit3, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit4, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit5, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit6, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit7, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit8, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
-    connect(multiSendUnit9, &serialPortMultiSendUnit::clickPushButton, this, &SerialPortWidget::multiSendData);
+    connect(multiSendUnit0, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit1, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit2, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit3, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit4, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit5, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit6, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit7, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit8, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+    connect(multiSendUnit9, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
 }
 
-void SerialPortWidget::initSearchDialog()
+void SerialWidget::initSearchDialog()
 {
     // 初始化搜索对话框
     searchDialog = new SearchDialog(portName, receiveTextEdit, this);
@@ -276,10 +276,10 @@ void SerialPortWidget::initSearchDialog()
 
     // 添加 Ctrl+F 快捷键
     searchShortcut = new QShortcut(QKeySequence::Find, this);
-    connect(searchShortcut, &QShortcut::activated, this, &SerialPortWidget::openSearchDialog);
+    connect(searchShortcut, &QShortcut::activated, this, &SerialWidget::openSearchDialog);
 }
 
-void SerialPortWidget::toggleConnection()
+void SerialWidget::toggleConnection()
 {
     if (serialPortManager->isConnected())
     {
@@ -330,7 +330,7 @@ void SerialPortWidget::toggleConnection()
     }
 }
 
-void SerialPortWidget::multiSendData(QString &dataStr)
+void SerialWidget::multiSendData(QString &dataStr)
 {
     QByteArray data;
     if (hexSendCheckBox->isChecked())
@@ -364,7 +364,7 @@ void SerialPortWidget::multiSendData(QString &dataStr)
     logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
 }
 
-void SerialPortWidget::sendData()
+void SerialWidget::sendData()
 {
     QString dataStr = sendTextEdit->toPlainText();
     QByteArray data;
@@ -399,7 +399,7 @@ void SerialPortWidget::sendData()
     logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
 }
 
-void SerialPortWidget::multiCycleTimer(int state)
+void SerialWidget::multiCycleTimer(int state)
 {
     if (state == Qt::Checked)
     {
@@ -416,7 +416,7 @@ void SerialPortWidget::multiCycleTimer(int state)
 
         multiCycleSendTimer = new QTimer(this);
         multiCycleSendTimer->setInterval(multiCycleSendLineEdit->text().toInt());
-        connect(multiCycleSendTimer, &QTimer::timeout, this, &SerialPortWidget::multiAutoSendData);
+        connect(multiCycleSendTimer, &QTimer::timeout, this, &SerialWidget::multiAutoSendData);
         multiCycleSendTimer->start();
     }
     else
@@ -434,7 +434,7 @@ void SerialPortWidget::multiCycleTimer(int state)
 
 }
 
-void SerialPortWidget::multiAutoSendData()
+void SerialWidget::multiAutoSendData()
 {
     switch (unitId)
     {//相关警告为故意不加break,可无视
@@ -518,19 +518,19 @@ void SerialPortWidget::multiAutoSendData()
     }
 }
 
-void SerialPortWidget::onDataReceived(const QByteArray &data)
+void SerialWidget::onDataReceived(const QByteArray &data)
 {
     receivedBytes += data.size();
     updateStatusLabel();
     logMessage("Recv: " + (hexReceiveCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
 }
 
-void SerialPortWidget::onErrorOccurred(const QString &error)
+void SerialWidget::onErrorOccurred(const QString &error)
 {
     QMessageBox::critical(this, "Error", error);
 }
 
-void SerialPortWidget::clearReceiveArea()
+void SerialWidget::clearReceiveArea()
 {
     receiveTextEdit->clear();
     sentBytes = 0;
@@ -538,18 +538,18 @@ void SerialPortWidget::clearReceiveArea()
     updateStatusLabel();
 }
 
-void SerialPortWidget::updateStatusLabel()
+void SerialWidget::updateStatusLabel()
 {
     statusLabel->setText(QString("Sent: %1 bytes | Received: %2 bytes").arg(sentBytes).arg(receivedBytes));
 }
 
-void SerialPortWidget::logMessage(const QString &message)
+void SerialWidget::logMessage(const QString &message)
 {
     QDateTime currentDateTime = QDateTime::currentDateTime();
     receiveTextEdit->append("[" + currentDateTime.toString("yyyy-MM-dd hh:mm:ss.zzz") + "] " + message);
 }
 
-void SerialPortWidget::loadSettings()
+void SerialWidget::loadSettings()
 {
     baudRateComboBox->setCurrentText(serialSettings->value(portName + "/BaudRate", "9600").toString());
     dataBitsComboBox->setCurrentText(serialSettings->value(portName + "/DataBits", "8").toString());
@@ -592,7 +592,7 @@ void SerialPortWidget::loadSettings()
 
 }
 
-void SerialPortWidget::saveSettings()
+void SerialWidget::saveSettings()
 {
     serialSettings->beginGroup(portName);
     serialSettings->setValue("BaudRate", baudRateComboBox->currentText());

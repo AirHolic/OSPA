@@ -1,5 +1,5 @@
-#ifndef SERIALPORTMULTISENDUNIT_H
-#define SERIALPORTMULTISENDUNIT_H
+#ifndef SERIALMULTISENDUNIT_H
+#define SERIALMULTISENDUNIT_H
 
 #include <QWidget>
 
@@ -7,13 +7,13 @@ class QCheckBox;
 class QLineEdit;
 class QPushButton;
 
-class serialPortMultiSendUnit : public QWidget
+class serialMultiSendUnit : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit serialPortMultiSendUnit(const int &unitId, QWidget *parent = nullptr);
-    ~serialPortMultiSendUnit();
+    explicit serialMultiSendUnit(const int &unitId, QWidget *parent = nullptr);
+    ~serialMultiSendUnit();
 
     QString getLineText();
     QCheckBox *getCheckBox();
@@ -37,4 +37,4 @@ private:
 
 };
 
-#endif // SERIALPORTMULTISENDUNIT_H
+#endif // SERIALMULTISENDUNIT_H
