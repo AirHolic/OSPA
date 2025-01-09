@@ -22,7 +22,8 @@ SOURCES += \
     serialmanager.cpp \
     serialmultisendunit.cpp \
     serialprotocoltransmission.cpp \
-    serialwidget.cpp
+    serialwidget.cpp \
+    ymodem.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -30,7 +31,8 @@ HEADERS += \
     serialmanager.h \
     serialmultisendunit.h \
     serialprotocoltransmission.h \
-    serialwidget.h
+    serialwidget.h \
+    ymodem.h
 
 FORMS += \
     mainwindow.ui \

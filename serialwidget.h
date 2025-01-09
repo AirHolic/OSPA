@@ -6,6 +6,7 @@
 #include <QSerialPort>
 #include "serialmanager.h"
 #include "serialmultisendunit.h"
+#include "serialprotocoltransmission.h"
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <QLineEdit>
@@ -50,6 +51,7 @@ private:
     void initUI();
     void initConnections();
     void initSearchDialog();
+    void enableUi(bool enable);
     void loadSettings();
     void saveSettings();
     void updateStatusLabel();
@@ -64,6 +66,8 @@ private:
 
     QTimer *multiCycleSendTimer;
     int unitId;
+
+    SerialProtocolTransmission *ymodemWidget;
 
     // UI elements
     QVBoxLayout *sendSideLayout;

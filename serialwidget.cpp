@@ -200,9 +200,10 @@ void SerialWidget::initUI()
 
     // ymodem发送区
     QWidget *ymodemSendWidget = new QWidget;
+    ymodemWidget = new SerialProtocolTransmission(this);
+    QVBoxLayout *ymodemLayout = new QVBoxLayout(ymodemSendWidget);
+    ymodemLayout->addWidget(ymodemWidget);
     sendTabWidget->addTab(ymodemSendWidget, "YModem");
-
-    
 
     // 将上下布局添加到主布局
     mainLayout->addLayout(upLayout);
@@ -212,18 +213,23 @@ void SerialWidget::initUI()
     mainLayout->addWidget(statusLabel);
 
     // 未连接时禁用相关控件
-    multiCycleSendCheckBox->setEnabled(false);
-    sendButton->setEnabled(false);
-    multiSendUnit0->getPushButton()->setEnabled(false);
-    multiSendUnit1->getPushButton()->setEnabled(false);
-    multiSendUnit2->getPushButton()->setEnabled(false);
-    multiSendUnit3->getPushButton()->setEnabled(false);
-    multiSendUnit4->getPushButton()->setEnabled(false);
-    multiSendUnit5->getPushButton()->setEnabled(false);
-    multiSendUnit6->getPushButton()->setEnabled(false);
-    multiSendUnit7->getPushButton()->setEnabled(false);
-    multiSendUnit8->getPushButton()->setEnabled(false);
-    multiSendUnit9->getPushButton()->setEnabled(false);
+    enableUi(false);
+}
+
+void SerialWidget::enableUi(bool enable)
+{
+    multiCycleSendCheckBox->setEnabled(enable);
+    sendButton->setEnabled(enable);
+    multiSendUnit0->getPushButton()->setEnabled(enable);
+    multiSendUnit1->getPushButton()->setEnabled(enable);
+    multiSendUnit2->getPushButton()->setEnabled(enable);
+    multiSendUnit3->getPushButton()->setEnabled(enable);
+    multiSendUnit4->getPushButton()->setEnabled(enable);
+    multiSendUnit5->getPushButton()->setEnabled(enable);
+    multiSendUnit6->getPushButton()->setEnabled(enable);
+    multiSendUnit7->getPushButton()->setEnabled(enable);
+    multiSendUnit8->getPushButton()->setEnabled(enable);
+    multiSendUnit9->getPushButton()->setEnabled(enable);
 }
 
 void SerialWidget::sendAddUi(int index)
@@ -284,23 +290,10 @@ void SerialWidget::toggleConnection()
     if (serialPortManager->isConnected())
     {
         multiCycleSendCheckBox->setChecked(false);
-        multiCycleSendCheckBox->setEnabled(false);
+        enableUi(false);
 
         serialPortManager->disconnectSerialPort();
         connectButton->setText("Connect");
-
-        sendButton->setEnabled(false);
-        multiSendUnit0->getPushButton()->setEnabled(false);
-        multiSendUnit1->getPushButton()->setEnabled(false);
-        multiSendUnit2->getPushButton()->setEnabled(false);
-        multiSendUnit3->getPushButton()->setEnabled(false);
-        multiSendUnit4->getPushButton()->setEnabled(false);
-        multiSendUnit5->getPushButton()->setEnabled(false);
-        multiSendUnit6->getPushButton()->setEnabled(false);
-        multiSendUnit7->getPushButton()->setEnabled(false);
-        multiSendUnit8->getPushButton()->setEnabled(false);
-        multiSendUnit9->getPushButton()->setEnabled(false);
-
     }
     else
     {
@@ -312,20 +305,7 @@ void SerialWidget::toggleConnection()
                                                  flowControlComboBox->currentIndex()))
         {
             connectButton->setText("Disconnect");
-
-            sendButton->setEnabled(true);
-            multiSendUnit0->getPushButton()->setEnabled(true);
-            multiSendUnit1->getPushButton()->setEnabled(true);
-            multiSendUnit2->getPushButton()->setEnabled(true);
-            multiSendUnit3->getPushButton()->setEnabled(true);
-            multiSendUnit4->getPushButton()->setEnabled(true);
-            multiSendUnit5->getPushButton()->setEnabled(true);
-            multiSendUnit6->getPushButton()->setEnabled(true);
-            multiSendUnit7->getPushButton()->setEnabled(true);
-            multiSendUnit8->getPushButton()->setEnabled(true);
-            multiSendUnit9->getPushButton()->setEnabled(true);
-
-            multiCycleSendCheckBox->setEnabled(true);
+            enableUi(true);
         }
     }
 }
