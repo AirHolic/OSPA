@@ -16,7 +16,8 @@ serialMultiSendUnit::serialMultiSendUnit(const int &unitId, QWidget *parent)
     multiSendUnit->addWidget(multiSendUnitPushButton);
 
     connect(multiSendUnitPushButton, &QPushButton::clicked, this, [this](){
-        emit returnPushButton();
+        QString dataStr = getLineText();
+        emit clickPushButton(dataStr);
     });
 }
 serialMultiSendUnit::~serialMultiSendUnit()
@@ -47,10 +48,4 @@ QCheckBox *serialMultiSendUnit::getCheckBox()
 QPushButton *serialMultiSendUnit::getPushButton()
 {
     return multiSendUnitPushButton;
-}
-
-void serialMultiSendUnit::returnPushButton()
-{
-    QString dataStr = getLineText();
-    emit clickPushButton(dataStr);
 }

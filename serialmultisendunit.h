@@ -24,9 +24,6 @@ public:
 signals:
     void clickPushButton(QString &data);
 
-private slots:
-    void returnPushButton();
-
 private:
     int unitId;
 
