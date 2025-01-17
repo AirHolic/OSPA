@@ -1,6 +1,7 @@
 #include "serialwidget.h"
 #include "searchdialog.h"
 #include <QGridLayout>
+#include "serialprotocoltransmission.h"
 #include "serialmultisendunit.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -230,6 +231,10 @@ void SerialWidget::enableUi(bool enable)
     multiSendUnit7->getPushButton()->setEnabled(enable);
     multiSendUnit8->getPushButton()->setEnabled(enable);
     multiSendUnit9->getPushButton()->setEnabled(enable);
+    if(enable == false)
+    {
+        multiCycleSendCheckBox->setChecked(false);
+    }
 }
 
 void SerialWidget::sendAddUi(int index)

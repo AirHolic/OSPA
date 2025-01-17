@@ -6,7 +6,6 @@
 #include <QSerialPort>
 #include "serialmanager.h"
 #include "serialmultisendunit.h"
-#include "serialprotocoltransmission.h"
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <QLineEdit>
@@ -19,6 +18,8 @@ class QCheckBox;
 class QLabel;
 class QShortcut;
 class SearchDialog;
+class SerialProtocolTransmission;
+
 
 class SerialWidget : public QWidget
 {
@@ -27,6 +28,14 @@ class SerialWidget : public QWidget
 public:
     explicit SerialWidget(const QString &portName, QWidget *parent = nullptr);
     ~SerialWidget();
+    void enableUi(bool enable);
+    void logMessage(const QString &message);
+    void updateStatusLabel();
+
+    QString portName;
+    SerialManager *serialPortManager;
+    qint64 sentBytes;
+    qint64 receivedBytes;
 
 signals:
     void closeRequested(int index); // 请求关闭信号
@@ -51,18 +60,12 @@ private:
     void initUI();
     void initConnections();
     void initSearchDialog();
-    void enableUi(bool enable);
     void loadSettings();
     void saveSettings();
-    void updateStatusLabel();
-    void logMessage(const QString &message);
 
-    QString portName;
+
     QSettings *serialSettings;
     QSettings *multiSendSettings;
-    SerialManager *serialPortManager;
-    qint64 sentBytes;
-    qint64 receivedBytes;
 
     QTimer *multiCycleSendTimer;
     int unitId;
