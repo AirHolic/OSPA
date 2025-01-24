@@ -3,10 +3,11 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <cstdint>
 
-typedef unsigned char   uint8_t;
-typedef unsigned short  uint16_t;
-typedef unsigned int    uint32_t;
+//typedef unsigned char   uint8_t;
+//typedef unsigned short  uint16_t;
+//typedef unsigned int    uint32_t;
 
 class Ymodem : public QObject
 {
@@ -15,16 +16,16 @@ class Ymodem : public QObject
 public:
     Ymodem();
 
-    void YmodemSendFileReady(QByteArray &file_name, int file_size);
-    void YmodemSendFileData(QByteArray &data, int len);
+    void YmodemSendFileReady(QByteArray file_name, int file_size);
+    void YmodemSendFileData(QByteArray data, int len);
+    void ymodemRecvData(uint8_t *recv_data, int len);
+public slots:
 
     void YmodemSendFileStart();
 
-public slots:
-    void ymodemRecvData(uint8_t *recv_data, uint16_t len);
-
 signals:
-    void ymodemSendData(uint8_t *send_data, uint16_t len);
+
+    void ymodemSendData(uint8_t *send_data, int len);
 
 private:
 
@@ -102,17 +103,6 @@ private:
     0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8,
     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
     };
-
-    /* Ymodem 文件信息 */
-    typedef struct{
-        uint8_t ymodem_head;             // 数据帧头
-        uint8_t ymodem_num;              // 数据帧序号
-        uint16_t ymodem_data_cache_len;  // 数据帧长度
-        uint16_t ymodem_crc;             // 数据帧CRC
-        uint8_t ymodem_data_cache[1024]; // 数据帧缓存
-    } Ymodem_Data_Frame_t;
-    Ymodem_Data_Frame_t *ymodem_data_frame_t;
-    uint8_t ymodem_recv_data[1024];
 
     /* Ymodem CRC16 */
     uint16_t YmodemCRC16Table(uint8_t *data, int len);

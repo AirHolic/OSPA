@@ -11,6 +11,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QSerialPort>
+#include <QThread>
 
 class SerialWidget;
 class SerialManager;
@@ -25,13 +26,15 @@ public:
     SerialWidget *serialWidget;
 
 signals:
-    int protcocolRecvData(uint8_t *data, uint16_t len);
+
+    void startTrasmit();
 
 private slots:
     void openFile();
     void startYModemTransfer();
     void protocolHexReceiveData(const QByteArray &data);
-    int protcocolSendData(uint8_t *data, uint16_t len);
+    int protcocolSendData(uint8_t *data, int len);
+
 private:
     QString filePath;        // 文件路径
     QProgressBar *progressBar; // 进度条
@@ -40,7 +43,9 @@ private:
     QLabel *fileLabel;           // 文件路径显示
 
     Ymodem *ymodem;
+    QThread protocolThread;
 
+    int protcocolRecvData(uint8_t *data, int len);
     void protocolHexSendData(const QByteArray &data);
     void initUI();
     void initConnections();

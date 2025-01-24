@@ -2,7 +2,10 @@
 #include "serialmanager.h"
 #include "serialwidget.h"
 #include "serialprotocoltransmission.h"
+#include <QThread>
 #include <QDebug>
+#include <iostream>
+#include <cstdint>
 uint8_t recvData[10];
 uint8_t sendData[1030];
 
@@ -14,20 +17,15 @@ SerialProtocolTransmission::SerialProtocolTransmission(QWidget *parent)
     serialWidget = (SerialWidget*)parentWidget();
     ymodem = new Ymodem();
 
-    connect(this, &SerialProtocolTransmission::protcocolRecvData, ymodem, &Ymodem::ymodemRecvData);
-    connect(serialWidget->serialPortManager, &SerialManager::dataReceived, this, [this](QByteArray data){
-        protocolHexReceiveData(data);
-        emit protcocolRecvData(recvData,sizeof (recvData));
-    });
-
-    connect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
+    //connect(this, &SerialProtocolTransmission::protcocolRecvData, ymodem, &Ymodem::ymodemRecvData);
 
     
 }
 
 SerialProtocolTransmission::~SerialProtocolTransmission()
 {
-
+    protocolThread.quit();
+    protocolThread.wait();
 }
 
 void SerialProtocolTransmission::initUI()
@@ -63,7 +61,7 @@ void SerialProtocolTransmission::initConnections()
     connect(startButton, &QPushButton::clicked, this, &SerialProtocolTransmission::startYModemTransfer);
     //bug
     //connect(serialManager, &SerialManager::dataReceived, this, &SerialProtocolTransmission::protocolHexReceiveData);
-}
+ }
 
 void SerialProtocolTransmission::openFile()
 {
@@ -83,27 +81,27 @@ void SerialProtocolTransmission::protocolHexSendData(const QByteArray &data)
     serialWidget->serialPortManager->sendData(data);
     serialWidget->sentBytes += data.size();
     serialWidget->updateStatusLabel();
-    serialWidget->logMessage("Sent: " + data.toHex(' ').toUpper());
+    serialWidget->logMessage("protocolSent: " + data.toHex(' ').toUpper());
 }
 
 void SerialProtocolTransmission::protocolHexReceiveData(const QByteArray &data)
 {
-    memcpy(recvData, data.constData(), data.size());
+    memcpy(recvData, data.data(), data.size());
 }
 
-int SerialProtocolTransmission::protcocolSendData(uint8_t *data, uint16_t len)
+int SerialProtocolTransmission::protcocolSendData(uint8_t *data, int len)
 {
     QByteArray sendData(reinterpret_cast<const char*>(data), len);
+    //qDebug() << sendData.toHex(' ') << endl;
     protocolHexSendData(sendData);
     return 0;
 }
 
-// int SerialProtocolTransmission::protcocolRecvData(uint8_t *data, uint16_t len)
-// {
-//     // data = recvData;
-//     // len = sizeof (recvData);
-//     // return 0;
-// }
+ int SerialProtocolTransmission::protcocolRecvData(uint8_t *data, int len)
+ {
+     ymodem->ymodemRecvData(data, len);
+     return 0;
+ }
 
 void SerialProtocolTransmission::startYModemTransfer()
 {
@@ -123,6 +121,15 @@ void SerialProtocolTransmission::startYModemTransfer()
     QByteArray fileName = ymodemFileInfo->fileName().toUtf8();
     int fileSize = ymodemFileInfo->size();
 
+    connect(serialWidget->serialPortManager, &SerialManager::dataReceived, this, [this](QByteArray data){
+        protocolHexReceiveData(data);
+        qDebug() << "data:" << data << endl;
+        protcocolRecvData(recvData, sizeof (recvData));
+    });
+
+    connect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
+    connect(this, &SerialProtocolTransmission::startTrasmit, ymodem, &Ymodem::YmodemSendFileStart);
+
     progressBar->setMaximum(0);
     progressBar->setMinimum(0);
     qDebug() << fileName << endl << fileSize;
@@ -132,13 +139,18 @@ void SerialProtocolTransmission::startYModemTransfer()
     serialWidget->enableUi(false);
     qDebug() << "x" << endl;
 
-    ymodem->YmodemSendFileStart();
+    protocolThread.start();//todo:补一个触发线程的槽函数
+    ymodem->moveToThread(&protocolThread);
 
+
+    emit startTrasmit();
+
+    //protocolThread.exit();
     // TODO: 实现 YModem 传输逻辑
     // 这里可以调用 YModem 协议的实现代码
     // 例如：YModem::sendFile(serialPort, filePath, progressBar);
 
-    serialWidget->enableUi(true);
+    //serialWidget->enableUi(true);
 
-    QMessageBox::information(this, "Info", "YModem transfer started.");
+    //QMessageBox::information(this, "Info", "YModem transfer started.");
 }
