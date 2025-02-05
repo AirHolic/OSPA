@@ -189,6 +189,11 @@ uint8_t Ymodem::YmodemSendNewFrame()
         start_flag = (ymodem_data_frame_t.ymodem_num - 1) * 1024;
         end_flag = start_flag + 1024;
         memset(ymodem_data_frame_t.ymodem_data_cache,0x00,1024);
+        // for(int i = 0; i < 1024; i++)
+        // {
+        //     ymodem_data_frame_t.ymodem_data_cache[i] = 0x00;
+        // }
+        memcpy(ymodem_data_frame_t.ymodem_data_cache, ymodem_file_data.mid(start_flag, end_flag).constData(), ymodem_data_frame_t.ymodem_data_cache_len);
     }
     else if (ymodem_data_frame_t.ymodem_num >= ymodem_file_data_frame_num)
     {
@@ -197,15 +202,20 @@ uint8_t Ymodem::YmodemSendNewFrame()
         start_flag = (ymodem_data_frame_t.ymodem_num - 1) * 1024;
         end_flag = start_flag + ymodem_file_size % 1024;
         memset(ymodem_data_frame_t.ymodem_data_cache, 0x1A, 1024);
+        // for(int i = 0; i < 1024; i++)
+        // {
+        //     ymodem_data_frame_t.ymodem_data_cache[i] = 0x1A;
+        // }
+        memcpy(ymodem_data_frame_t.ymodem_data_cache, ymodem_file_data.mid(start_flag, end_flag).constData(), ymodem_file_size % 1024);
+        qDebug() << "YmodemSendNewFrame rt1:" << ymodem_file_data_frame_num <<endl;
     }
     
 
-        memcpy(ymodem_data_frame_t.ymodem_data_cache, ymodem_file_data.mid(start_flag, end_flag).constData(), ymodem_data_frame_t.ymodem_data_cache_len);
+        
         ymodem_data_frame_t.ymodem_crc = YmodemCRC16(ymodem_data_frame_t.ymodem_data_cache, ymodem_data_frame_t.ymodem_data_cache_len);
     
     if(ymodem_data_frame_t.ymodem_num > ymodem_file_data_frame_num)
     {
-        qDebug() << "YmodemSendNewFrame rt1:" << ymodem_file_data_frame_num <<endl;
         return 1;
     }
     return 0;
