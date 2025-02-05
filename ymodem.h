@@ -19,6 +19,8 @@ public:
     void YmodemSendFileReady(QByteArray file_name, int file_size);
     void YmodemSendFileData(QByteArray data, int len);
     void ymodemRecvData(uint8_t *recv_data, int len);
+    void YmodemSendFileInterrupt();
+
 public slots:
 
     void YmodemSendFileStart();
@@ -26,6 +28,7 @@ public slots:
 signals:
 
     void ymodemSendData(uint8_t *send_data, int len);
+    void ymodemSendEnd();
 
 private:
 

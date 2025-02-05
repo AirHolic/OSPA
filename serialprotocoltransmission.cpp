@@ -18,8 +18,6 @@ SerialProtocolTransmission::SerialProtocolTransmission(QWidget *parent)
     ymodem = new Ymodem();
 
     //connect(this, &SerialProtocolTransmission::protcocolRecvData, ymodem, &Ymodem::ymodemRecvData);
-
-    
 }
 
 SerialProtocolTransmission::~SerialProtocolTransmission()
@@ -53,6 +51,26 @@ void SerialProtocolTransmission::initUI()
     mainLayout->addLayout(fileLayout);
     mainLayout->addWidget(progressBar);
     mainLayout->addWidget(startButton);
+}
+
+void SerialProtocolTransmission::protocolEnableUI(bool flag)
+{
+    if(flag)
+    {
+        openFileButton->setEnabled(true);
+    }
+    else
+    {
+        openFileButton->setEnabled(false);
+        startButton->setEnabled(false);
+        progressBar->setRange(0, 100);
+        progressBar->setValue(0);
+        fileLabel->setText("No file selected");
+        filePath.clear();
+        ymodem->YmodemSendFileInterrupt();
+        disconnect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
+        disconnect(this, &SerialProtocolTransmission::startTrasmit, ymodem, &Ymodem::YmodemSendFileStart);
+    }
 }
 
 void SerialProtocolTransmission::initConnections()
@@ -99,8 +117,8 @@ int SerialProtocolTransmission::protcocolSendData(uint8_t *data, int len)
 
  int SerialProtocolTransmission::protcocolRecvData(uint8_t *data, int len)
  {
-     ymodem->ymodemRecvData(data, len);
-     return 0;
+    ymodem->ymodemRecvData(data, len);
+    return 0;
  }
 
 void SerialProtocolTransmission::startYModemTransfer()
@@ -129,6 +147,7 @@ void SerialProtocolTransmission::startYModemTransfer()
 
     connect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
     connect(this, &SerialProtocolTransmission::startTrasmit, ymodem, &Ymodem::YmodemSendFileStart);
+    connect(ymodem, &Ymodem::ymodemSendEnd, this, &SerialProtocolTransmission::endYModemTransfer);
 
     progressBar->setMaximum(0);
     progressBar->setMinimum(0);
@@ -153,4 +172,14 @@ void SerialProtocolTransmission::startYModemTransfer()
     //serialWidget->enableUi(true);
 
     //QMessageBox::information(this, "Info", "YModem transfer started.");
+}
+
+void SerialProtocolTransmission::endYModemTransfer()
+{
+    progressBar->setRange(0, 100);
+    progressBar->setValue(0);
+    serialWidget->enableUi(true);
+    QMessageBox::information(this, "Info", "YModem transfer finished.");
+    disconnect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
+    disconnect(this, &SerialProtocolTransmission::startTrasmit, ymodem, &Ymodem::YmodemSendFileStart);
 }

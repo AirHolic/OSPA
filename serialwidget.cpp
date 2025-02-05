@@ -215,6 +215,7 @@ void SerialWidget::initUI()
 
     // 未连接时禁用相关控件
     enableUi(false);
+    ymodemWidget->protocolEnableUI(false);
 }
 
 void SerialWidget::enableUi(bool enable)
@@ -299,6 +300,7 @@ void SerialWidget::toggleConnection()
 
         serialPortManager->disconnectSerialPort();
         connectButton->setText("Connect");
+        ymodemWidget->protocolEnableUI(false);
     }
     else
     {
@@ -311,6 +313,7 @@ void SerialWidget::toggleConnection()
         {
             connectButton->setText("Disconnect");
             enableUi(true);
+            ymodemWidget->protocolEnableUI(true);
         }
     }
 }

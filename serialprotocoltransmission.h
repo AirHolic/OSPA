@@ -25,6 +25,8 @@ public:
     ~SerialProtocolTransmission();
     SerialWidget *serialWidget;
 
+    void protocolEnableUI(bool flag);
+
 signals:
 
     void startTrasmit();
@@ -32,6 +34,7 @@ signals:
 private slots:
     void openFile();
     void startYModemTransfer();
+    void endYModemTransfer();
     void protocolHexReceiveData(const QByteArray &data);
     int protcocolSendData(uint8_t *data, int len);
 

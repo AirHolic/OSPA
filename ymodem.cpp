@@ -59,11 +59,18 @@ void Ymodem::YmodemSendFileStart()
 {
     qDebug() << "i" << endl;
     ymodem_send_state = YmodemSendState::YMODEM_STATE_READY_SEND;
+    ymodem_ack_state = YmodemAckState::YMODEM_STATE_ACK_IDLE;
     while (YmodemSendStateMachine() == 1)
     {
         YmodemAckHandle();
         QThread::sleep(1);//秒
     }
+}
+
+void Ymodem::YmodemSendFileInterrupt()
+{
+    ymodem_send_state = YmodemSendState::YMODEM_STATE_SEND_CANCEL;
+    ymodem_ack_state = YmodemAckState::YMODEM_STATE_ACK_CANCEL;
 }
 
 uint16_t Ymodem::YmodemCRC16Table(uint8_t *data, int len)
@@ -373,7 +380,9 @@ uint8_t Ymodem::YmodemSendStateMachine()
                 YmodemSendFinishFrame();
                 YmodemSendData();
                 qDebug() << "YMODEM_STATE_SEND_FINISH" << endl;
-                ymodem_send_state = YmodemSendState::YMODEM_STATE_SEND_CANCEL;
+                emit ymodemSendEnd();
+                //ymodem_send_state = YmodemSendState::YMODEM_STATE_SEND_CANCEL;
+                return 0;
             }
             break;
         default:
