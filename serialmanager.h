@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSerialPort>
 #include <QByteArray>
+#include <QTimer>
 
 class SerialManager : public QObject
 {
@@ -24,8 +25,12 @@ signals:
     void dataReceived(const QByteArray &data);
     void errorOccurred(const QString &error);
 
+private slots:
+    void onReadyRead(const QByteArray &data);
+
 private:
     QSerialPort *serialPort;
+    QTimer *timer;
 };
 
 #endif // SERIALMANAGER_H

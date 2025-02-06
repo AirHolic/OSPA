@@ -2,6 +2,8 @@
     "C_Cpp.errorSquiggles": "disabled",
     "commentTranslate.hover.enabled": false,
     "files.associations": {
-        "new": "cpp"
+        "new": "cpp",
+        "*.tcc": "cpp",
+        "string": "cpp"
     }
 }

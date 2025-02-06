@@ -1,9 +1,18 @@
 #include "serialmanager.h"
 
+QByteArray serialManagerRecvData;
+
 SerialManager::SerialManager(QObject *parent) : QObject(parent), serialPort(new QSerialPort(this))
 {
+    timer = new QTimer(this);
     connect(serialPort, &QSerialPort::readyRead, this, [this]() {
-        emit dataReceived(receiveData());
+        onReadyRead(receiveData());
+        //emit dataReceived(receiveData());
+    });
+    connect(timer, &QTimer::timeout, this, [this]() {
+        timer->stop();
+        emit dataReceived(serialManagerRecvData);
+        serialManagerRecvData.clear();
     });
 }
 
@@ -60,4 +69,10 @@ QByteArray SerialManager::receiveData()
         data.append(serialPort->readAll());
     }
     return data;
+}
+
+void SerialManager::onReadyRead(const QByteArray &data)
+{
+    timer->start(100);
+    serialManagerRecvData.append(data);
 }
