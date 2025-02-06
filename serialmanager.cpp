@@ -73,6 +73,6 @@ QByteArray SerialManager::receiveData()
 
 void SerialManager::onReadyRead(const QByteArray &data)
 {
-    timer->start(100);
+    timer->start(5);
     serialManagerRecvData.append(data);
 }
