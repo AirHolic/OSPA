@@ -2,62 +2,48 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>800</width>
-    <height>600</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Serial Port Manager</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="currentIndex">
-       <number>-1</number>
-      </property>
-     </widget>
-    </item>
-   </layout>
+  <property name="minimumSize">
+   <size>
+    <width>800</width>
+    <height>600</height>
+   </size>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="tabsClosable">
+    <bool>true</bool>
+   </property>
+   <property name="movable">
+    <bool>true</bool>
+   </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>800</width>
-     <height>30</height>
-    </rect>
+   <property name="movable">
+    <bool>false</bool>
    </property>
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <action name="actionRefresh"/>
-   <action name="actionOpen"/>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <action name="refreshAction">
+    <property name="text">
+     <string>Refresh Serial Ports</string>
+    </property>
+   </action>
+   <action name="openAction">
+    <property name="text">
+     <string>Open Serial Port</string>
+    </property>
+   </action>
+   <addaction name="refreshAction"/>
+   <addaction name="openAction"/>
    <widget class="QComboBox" name="comboBoxSerialPorts">
-    <property name="minimumSize">
-     <size>
-      <width>150</width>
-      <height>0</height>
-     </size>
+    <property name="minimumWidth">
+     <number>150</number>
     </property>
    </widget>
   </widget>
-  <action name="actionRefresh">
-   <property name="text">
-    <string>Refresh Serial Ports</string>
-   </property>
-  </action>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open Serial Port</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>
