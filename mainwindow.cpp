@@ -9,7 +9,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setWindowTitle("Serial Port Manager");
+    setWindowTitle("Ordinary Serial Port Assistant");
     setMinimumSize(800, 600);
 
     // 创建标签页控件
