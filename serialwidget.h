@@ -10,6 +10,7 @@
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTimer>
+#include "crc.h"
 
 class QTextEdit;
 class QComboBox;
@@ -62,6 +63,7 @@ private:
     void initSearchDialog();
     void loadSettings();
     void saveSettings();
+    uint calculateCRC(const QByteArray &data, int formatIndex);
 
 
     QSettings *serialSettings;
@@ -98,6 +100,22 @@ private:
     QLabel *multiCycleSendUnitLabel;
     SearchDialog *searchDialog;
     QShortcut *searchShortcut;
+
+    Crc *crc;
+    QVBoxLayout *crcLayout;
+    QHBoxLayout *crcInsertPositionLayout;
+    QCheckBox *crcEnableCheckBox;
+    QComboBox *crcFormatComboBox;
+    QComboBox *crcInsertPositionComboBox;
+    QLabel *crcInsertPositionLabel1;
+    QLineEdit *crcCalculateFristSpecificByteLineEdit;
+    QLabel *crcInsertPositionLabel2;
+    QLineEdit *crcCalculateLastSpecificByteLineEdit;
+    QLabel *crcInsertPositionLabel3;
+    QLineEdit *crcInsertSpecificByteLineEdit;
+    QLabel *crcInsertPositionLabel4;
+    QLineEdit *crcResultLineEdit;
+    QLabel *crcResultLabel;
 
     serialMultiSendUnit *multiSendUnit0;
     serialMultiSendUnit *multiSendUnit1;

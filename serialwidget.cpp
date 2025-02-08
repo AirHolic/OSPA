@@ -138,17 +138,19 @@ void SerialWidget::initUI()
 
     // 单条发送区
     QWidget *singleSendWidget = new QWidget;
-    QHBoxLayout *singleSendLayout = new QHBoxLayout;
+    QVBoxLayout *singleSendLayout = new QVBoxLayout;
+    QHBoxLayout *singleSendUpLayout = new QHBoxLayout;
+    singleSendLayout->addLayout(singleSendUpLayout);
     singleSendWidget->setLayout(singleSendLayout);
     sendTabWidget->addTab(singleSendWidget, "Single");
-    singleSendLayout->addWidget(sendTextEdit);
+    singleSendUpLayout->addWidget(sendTextEdit);
 
     // 发送区侧边布局：十六进制发送勾选框和发送按钮
     sendSideLayout = new QVBoxLayout;
     sendSideLayout->addWidget(hexSendCheckBox);
     sendSideLayout->addWidget(sendNewRowCheckbox);
     sendSideLayout->addWidget(sendButton);
-    singleSendLayout->addLayout(sendSideLayout);
+    singleSendUpLayout->addLayout(sendSideLayout);
 
     // 多条发送区
     QWidget *multiSendWidget = new QWidget;
@@ -216,6 +218,64 @@ void SerialWidget::initUI()
     // 未连接时禁用相关控件
     enableUi(false);
     ymodemWidget->protocolEnableUI(false);
+
+    // CRC相关控件
+    crc = new Crc;
+    QVBoxLayout *crcLayout = new QVBoxLayout;
+    singleSendLayout->addLayout(crcLayout);
+
+    crcEnableCheckBox = new QCheckBox("Enable CRC", this);
+
+    QHBoxLayout *crcFormatLayout = new QHBoxLayout;
+    crcFormatComboBox = new QComboBox(this);
+    crcFormatComboBox->addItems(crc->crcList);//({"CRC-8", "CRC-16", "CRC-32"});
+    crcInsertPositionComboBox = new QComboBox(this);
+    crcInsertPositionComboBox->addItems({"Append to end", "Customize"});
+    crcFormatLayout->addWidget(crcFormatComboBox);
+    crcFormatLayout->addWidget(crcInsertPositionComboBox);
+    
+    QHBoxLayout *crcInsertPositionLayout = new QHBoxLayout;
+    crcInsertPositionLabel1 = new QLabel("Calculate the ", this); 
+    crcCalculateFristSpecificByteLineEdit = new QLineEdit(this);
+    crcInsertPositionLabel2 = new QLabel("th byte to the ", this);
+    crcCalculateLastSpecificByteLineEdit = new QLineEdit(this);
+    crcInsertPositionLabel3 = new QLabel("th byte, and insert it after the ", this);
+    crcInsertSpecificByteLineEdit = new QLineEdit(this);
+    //crcInsertSpecificByteLineEdit->setPlaceholderText("Enter byte position or -1 for last byte");
+    crcInsertPositionLabel4 = new QLabel("th byte.", this);
+    crcInsertSpecificByteLineEdit->setValidator(new QIntValidator(this));
+    crcInsertPositionLayout->addWidget(crcInsertPositionLabel1);
+    crcInsertPositionLayout->addWidget(crcCalculateFristSpecificByteLineEdit);
+    crcInsertPositionLayout->addWidget(crcInsertPositionLabel2);
+    crcInsertPositionLayout->addWidget(crcCalculateLastSpecificByteLineEdit);
+    crcInsertPositionLayout->addWidget(crcInsertPositionLabel3);
+    crcInsertPositionLayout->addWidget(crcInsertSpecificByteLineEdit);
+    crcInsertPositionLayout->addWidget(crcInsertPositionLabel4);
+
+    QHBoxLayout *crcResultLayout = new QHBoxLayout;
+    crcResultLabel = new QLabel("CRC Result: ", this);
+    crcResultLineEdit = new QLineEdit(this);
+    crcResultLayout->addWidget(crcResultLabel);
+    crcResultLayout->addWidget(crcResultLineEdit);
+    crcResultLineEdit->setReadOnly(true);
+
+    // 将CRC控件添加到发送区侧边布局
+    crcLayout->addWidget(crcEnableCheckBox);
+    crcLayout->addLayout(crcFormatLayout);
+    crcLayout->addLayout(crcInsertPositionLayout);
+    crcLayout->addLayout(crcResultLayout);
+
+    crcFormatComboBox->setVisible(false);
+    crcInsertPositionComboBox->setVisible(false);
+    crcInsertPositionLabel1->setVisible(false);
+    crcCalculateFristSpecificByteLineEdit->setVisible(false);
+    crcInsertPositionLabel2->setVisible(false);
+    crcCalculateLastSpecificByteLineEdit->setVisible(false);
+    crcInsertPositionLabel3->setVisible(false);
+    crcInsertSpecificByteLineEdit->setVisible(false);
+    crcInsertPositionLabel4->setVisible(false);
+    crcResultLabel->setVisible(false);
+    crcResultLineEdit->setVisible(false);
 }
 
 void SerialWidget::enableUi(bool enable)
@@ -265,6 +325,23 @@ void SerialWidget::initConnections()
     connect(serialPortManager, &SerialManager::dataReceived, this, &SerialWidget::onDataReceived);
     connect(serialPortManager, &SerialManager::errorOccurred, this, &SerialWidget::onErrorOccurred);
     connect(multiCycleSendCheckBox, &QCheckBox::stateChanged, this, &SerialWidget::multiCycleTimer);
+
+    connect(crcEnableCheckBox, &QCheckBox::stateChanged, [this](int state) {
+        crcFormatComboBox->setVisible(state);
+        crcInsertPositionComboBox->setVisible(state);
+        crcResultLabel->setVisible(state);
+        crcResultLineEdit->setVisible(state);
+    });
+
+    connect(crcInsertPositionComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index) {
+        crcInsertPositionLabel1->setVisible(index == 1);
+        crcCalculateFristSpecificByteLineEdit->setVisible(index == 1);
+        crcInsertPositionLabel2->setVisible(index == 1);
+        crcCalculateLastSpecificByteLineEdit->setVisible(index == 1);
+        crcInsertPositionLabel3->setVisible(index == 1);
+        crcInsertSpecificByteLineEdit->setVisible(index == 1);
+        crcInsertPositionLabel4->setVisible(index == 1);
+    });
 
     connect(multiSendUnit0, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
     connect(multiSendUnit1, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
@@ -376,6 +453,73 @@ void SerialWidget::sendData()
         data = dataStr.toUtf8();
     }
 
+    // CRC处理
+    if (crcEnableCheckBox->isChecked())
+    {
+        QByteArray crcData;
+        if (crcInsertPositionComboBox->currentIndex() == 0) // Append to end
+        {
+            crcData = data;
+        }
+        else // Customize
+        {
+            int firstPosition = crcCalculateFristSpecificByteLineEdit->text().toInt();
+            int lastPosition = crcCalculateLastSpecificByteLineEdit->text().toInt();
+            //int specificPosition = crcInsertSpecificByteLineEdit->text().toInt();
+
+            if (firstPosition == -1 || firstPosition >= data.size())
+            {
+                firstPosition = 0;
+            }
+            if (lastPosition == -1 || lastPosition >= data.size())
+            {
+                lastPosition = data.size() - 1;
+            }
+
+            crcData = data.mid(firstPosition, lastPosition - firstPosition + 1);
+        }
+        uint crcValue = crc->calculateCRC(crcData, crcFormatComboBox->currentIndex());
+
+        // 转换为相应格式并添加到数据中
+        QByteArray crcBytes;
+        switch(crcFormatComboBox->currentIndex())
+        {
+            case static_cast<int>(Crc::crcListIndex::CRC8):
+                crcBytes.append(crcValue);
+                break;
+            case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
+            case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
+                crcBytes.append(crcValue >> 8).append(crcValue & 0xFF);
+                break;
+            case static_cast<int>(Crc::crcListIndex::CRC32):
+            case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
+                crcBytes.append((crcValue >> 24) & 0xFF).append((crcValue >> 16) & 0xFF)
+                         .append((crcValue >> 8) & 0xFF).append(crcValue & 0xFF);
+                break;
+            default:
+                break;
+        }
+
+        if (crcInsertPositionComboBox->currentIndex() == 0) // Append to end
+        {
+            data.append(crcBytes);
+        }
+        else // Customize
+        {
+            int position = crcInsertSpecificByteLineEdit->text().toInt();
+            if (position == -1 || position >= data.size())
+            {
+                data.append(crcBytes);
+            }
+            else
+            {
+                data.insert(position, crcBytes);
+            }
+        }
+
+        crcResultLineEdit->setText(QString("%1").arg(crcValue, 0, 16));
+    }
+
     if (sendNewRowCheckbox->isChecked())
     {
         data.append(0x0D).append(0x0A);
@@ -385,6 +529,14 @@ void SerialWidget::sendData()
     sentBytes += data.size();
     updateStatusLabel();
     logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
+}
+
+// 添加CRC计算函数
+uint SerialWidget::calculateCRC(const QByteArray &data, int formatIndex)
+{
+    // 这里实现具体的CRC算法
+    // 根据formatIndex选择不同的CRC算法（如CRC-8、CRC-16、CRC-32）
+    // 返回计算出的CRC值
 }
 
 void SerialWidget::multiCycleTimer(int state)
