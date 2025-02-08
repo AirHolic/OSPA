@@ -67,16 +67,17 @@ void SerialWidget::openSearchDialog()
     }
 }
 
+// 初始化界面布局，添加注释说明每个区域及其作用
 void SerialWidget::initUI()
 {
-    // 接收区
+    // --------------------- 接收区 ---------------------
     receiveTextEdit = new QTextEdit(this);
     receiveTextEdit->setReadOnly(true);
 
-    // 单条发送区
+    // --------------------- 单条发送区 ---------------------
     sendTextEdit = new QTextEdit(this);
 
-    // 串口配置
+    // --------------------- 串口配置控件 ---------------------
     baudRateComboBox = new QComboBox(this);
     baudRateComboBox->addItems({"9600", "19200", "38400", "57600", "115200"});
 
@@ -92,29 +93,29 @@ void SerialWidget::initUI()
     flowControlComboBox = new QComboBox(this);
     flowControlComboBox->addItems({"None", "Hardware", "Software"});
 
-    // 按钮
+    // --------------------- 按钮 ---------------------
     connectButton = new QPushButton("Connect", this);
     sendButton = new QPushButton("Send", this);
     searchButton = new QPushButton("Search", this);
     clearReceiveButton = new QPushButton("Clear Receive", this);
 
-    // 复选框
+    // --------------------- 复选框 ---------------------
     hexReceiveCheckBox = new QCheckBox("HEX Receive", this);
     hexSendCheckBox = new QCheckBox("HEX Send", this);
     sendNewRowCheckbox = new QCheckBox("Send New Row", this);
 
-    // 状态栏
+    // --------------------- 状态栏 ---------------------
     statusLabel = new QLabel("Sent: 0 bytes | Received: 0 bytes", this);
     statusLabel->setAlignment(Qt::AlignRight);
 
-    // 布局
+    // --------------------- 主布局 ---------------------
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
-    // 接收区和相关控件
+    // 上部布局：接收区及其侧边控件
     QHBoxLayout *upLayout = new QHBoxLayout;
     upLayout->addWidget(receiveTextEdit);
 
-    // 接收区侧边布局：串口配置、十六进制接收勾选框和连接按钮
+    // 串口设置和其他控件的侧边布局
     QFormLayout *settingsLayout = new QFormLayout;
     settingsLayout->addRow("Baud Rate:", baudRateComboBox);
     settingsLayout->addRow("Data Bits:", dataBitsComboBox);
@@ -128,15 +129,14 @@ void SerialWidget::initUI()
     receiveSideLayout->addWidget(connectButton);
     receiveSideLayout->addWidget(searchButton);
     receiveSideLayout->addWidget(clearReceiveButton);
-
     upLayout->addLayout(receiveSideLayout);
 
-    // 发送区和相关控件
+    // 下部布局：发送区与多标签页控件
     QHBoxLayout *downLayout = new QHBoxLayout;
     sendTabWidget = new QTabWidget(this);
     downLayout->addWidget(sendTabWidget);
 
-    // 单条发送区
+    // 单条发送标签页
     QWidget *singleSendWidget = new QWidget;
     QVBoxLayout *singleSendLayout = new QVBoxLayout;
     QHBoxLayout *singleSendUpLayout = new QHBoxLayout;
@@ -145,14 +145,14 @@ void SerialWidget::initUI()
     sendTabWidget->addTab(singleSendWidget, "Single");
     singleSendUpLayout->addWidget(sendTextEdit);
 
-    // 发送区侧边布局：十六进制发送勾选框和发送按钮
+    // 发送区侧边：HEX发送 & 新行发送 & 发送按钮
     sendSideLayout = new QVBoxLayout;
     sendSideLayout->addWidget(hexSendCheckBox);
     sendSideLayout->addWidget(sendNewRowCheckbox);
     sendSideLayout->addWidget(sendButton);
     singleSendUpLayout->addLayout(sendSideLayout);
 
-    // 多条发送区
+    // 多条发送标签页（省略部分多条发送控件初始化，此部分同原风格保持）
     QWidget *multiSendWidget = new QWidget;
     QHBoxLayout *multiSendLayout = new QHBoxLayout;
     QGridLayout *multiSendGridLayout = new QGridLayout;
@@ -218,24 +218,26 @@ void SerialWidget::initUI()
     // 未连接时禁用相关控件
     enableUi(false);
     ymodemWidget->protocolEnableUI(false);
-
-    // CRC相关控件
+    
+    // --------------------- CRC相关控件 ---------------------
     crc = new Crc;
     QVBoxLayout *crcLayout = new QVBoxLayout;
     singleSendLayout->addLayout(crcLayout);
 
     crcEnableCheckBox = new QCheckBox("Enable CRC", this);
+    crcLayout->addWidget(crcEnableCheckBox);
 
     QHBoxLayout *crcFormatLayout = new QHBoxLayout;
     crcFormatComboBox = new QComboBox(this);
-    crcFormatComboBox->addItems(crc->crcList);//({"CRC-8", "CRC-16", "CRC-32"});
+    crcFormatComboBox->addItems(crc->crcList);
     crcInsertPositionComboBox = new QComboBox(this);
     crcInsertPositionComboBox->addItems({"Append to end", "Customize"});
     crcFormatLayout->addWidget(crcFormatComboBox);
     crcFormatLayout->addWidget(crcInsertPositionComboBox);
-    
+    crcLayout->addLayout(crcFormatLayout);
+
     QHBoxLayout *crcInsertPositionLayout = new QHBoxLayout;
-    crcInsertPositionLabel1 = new QLabel("Calculate the ", this); 
+    crcInsertPositionLabel1 = new QLabel("Calculate the ", this);
     crcCalculateFristSpecificByteLineEdit = new QLineEdit(this);
     crcInsertPositionLabel2 = new QLabel("th byte to the ", this);
     crcCalculateLastSpecificByteLineEdit = new QLineEdit(this);
@@ -251,20 +253,17 @@ void SerialWidget::initUI()
     crcInsertPositionLayout->addWidget(crcInsertPositionLabel3);
     crcInsertPositionLayout->addWidget(crcInsertSpecificByteLineEdit);
     crcInsertPositionLayout->addWidget(crcInsertPositionLabel4);
+    crcLayout->addLayout(crcInsertPositionLayout);
 
     QHBoxLayout *crcResultLayout = new QHBoxLayout;
     crcResultLabel = new QLabel("CRC Result: ", this);
     crcResultLineEdit = new QLineEdit(this);
+    crcResultLineEdit->setReadOnly(true);
     crcResultLayout->addWidget(crcResultLabel);
     crcResultLayout->addWidget(crcResultLineEdit);
-    crcResultLineEdit->setReadOnly(true);
-
-    // 将CRC控件添加到发送区侧边布局
-    crcLayout->addWidget(crcEnableCheckBox);
-    crcLayout->addLayout(crcFormatLayout);
-    crcLayout->addLayout(crcInsertPositionLayout);
     crcLayout->addLayout(crcResultLayout);
 
+    // 初始时隐藏CRC相关控件
     crcFormatComboBox->setVisible(false);
     crcInsertPositionComboBox->setVisible(false);
     crcInsertPositionLabel1->setVisible(false);
@@ -276,6 +275,15 @@ void SerialWidget::initUI()
     crcInsertPositionLabel4->setVisible(false);
     crcResultLabel->setVisible(false);
     crcResultLineEdit->setVisible(false);
+
+    // --------------------- 整体界面组合 ---------------------
+    mainLayout->addLayout(upLayout);
+    mainLayout->addLayout(downLayout);
+    mainLayout->addWidget(statusLabel);
+
+    // 根据串口连接状态，初始化部分控件不可用
+    enableUi(false);
+    ymodemWidget->protocolEnableUI(false);
 }
 
 void SerialWidget::enableUi(bool enable)
@@ -317,32 +325,38 @@ void SerialWidget::sendAddUi(int index)
 
 void SerialWidget::initConnections()
 {
+    // 根据当前标签页变化更新发送区域的布局
     connect(sendTabWidget, &QTabWidget::currentChanged, this, &SerialWidget::sendAddUi);
+    // 连接各按钮点击信号
     connect(connectButton, &QPushButton::clicked, this, &SerialWidget::toggleConnection);
     connect(sendButton, &QPushButton::clicked, this, &SerialWidget::sendData);
     connect(searchButton, &QPushButton::clicked, this, &SerialWidget::openSearchDialog);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialWidget::clearReceiveArea);
+    // 连接串口数据接收与错误处理信号
     connect(serialPortManager, &SerialManager::dataReceived, this, &SerialWidget::onDataReceived);
     connect(serialPortManager, &SerialManager::errorOccurred, this, &SerialWidget::onErrorOccurred);
+    // 连接循环发送相关信号
     connect(multiCycleSendCheckBox, &QCheckBox::stateChanged, this, &SerialWidget::multiCycleTimer);
 
+    // 当CRC启用勾选状态改变时显示或隐藏CRC相关控件
     connect(crcEnableCheckBox, &QCheckBox::stateChanged, [this](int state) {
         crcFormatComboBox->setVisible(state);
         crcInsertPositionComboBox->setVisible(state);
         crcResultLabel->setVisible(state);
         crcResultLineEdit->setVisible(state);
     });
-
+    // 根据插入模式改变，显示Customize模式下的相关输入控件
     connect(crcInsertPositionComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index) {
-        crcInsertPositionLabel1->setVisible(index == 1);
-        crcCalculateFristSpecificByteLineEdit->setVisible(index == 1);
-        crcInsertPositionLabel2->setVisible(index == 1);
-        crcCalculateLastSpecificByteLineEdit->setVisible(index == 1);
-        crcInsertPositionLabel3->setVisible(index == 1);
-        crcInsertSpecificByteLineEdit->setVisible(index == 1);
-        crcInsertPositionLabel4->setVisible(index == 1);
+        bool showCustomize = (index == 1);
+        crcInsertPositionLabel1->setVisible(showCustomize);
+        crcCalculateFristSpecificByteLineEdit->setVisible(showCustomize);
+        crcInsertPositionLabel2->setVisible(showCustomize);
+        crcCalculateLastSpecificByteLineEdit->setVisible(showCustomize);
+        crcInsertPositionLabel3->setVisible(showCustomize);
+        crcInsertSpecificByteLineEdit->setVisible(showCustomize);
+        crcInsertPositionLabel4->setVisible(showCustomize);
     });
-
+    // 循环发送各单元信号连接
     connect(multiSendUnit0, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
     connect(multiSendUnit1, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
     connect(multiSendUnit2, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
@@ -360,14 +374,36 @@ void SerialWidget::initConnections()
     connect(crcCalculateLastSpecificByteLineEdit, &QLineEdit::textChanged, this, &SerialWidget::onSendTextChanged);
 }
 
-void SerialWidget::onSendTextChanged()
+// 根据 CRC 算法生成对应的字节数组
+QByteArray SerialWidget::generateCrcBytes(uint crcValue, int formatIndex) const
 {
-    if (!crcEnableCheckBox->isChecked())
+    QByteArray crcBytes;
+    switch (formatIndex)
     {
-        crcResultLineEdit->clear();
-        return;
+    case static_cast<int>(Crc::crcListIndex::CRC8):
+        crcBytes.append(static_cast<char>(crcValue & 0xFF));
+        break;
+    case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
+    case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
+        crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
+        crcBytes.append(static_cast<char>(crcValue & 0xFF));
+        break;
+    case static_cast<int>(Crc::crcListIndex::CRC32):
+    case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
+        crcBytes.append(static_cast<char>((crcValue >> 24) & 0xFF));
+        crcBytes.append(static_cast<char>((crcValue >> 16) & 0xFF));
+        crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
+        crcBytes.append(static_cast<char>(crcValue & 0xFF));
+        break;
+    default:
+        break;
     }
+    return crcBytes;
+}
 
+// 根据用户输入文本转换成实际的字节数据，支持 HEX 或 UTF-8 格式
+QByteArray SerialWidget::getInputData() const
+{
     QString text = sendTextEdit->toPlainText();
     QByteArray data;
     if (hexSendCheckBox->isChecked())
@@ -375,10 +411,7 @@ void SerialWidget::onSendTextChanged()
         QString hexStr = text.simplified().remove(" ");
         QRegExp hexRegExp("^[0-9A-Fa-f]+$");
         if (!hexRegExp.exactMatch(hexStr))
-        {
-            crcResultLineEdit->setText("Invalid HEX Data");
-            return;
-        }
+            return QByteArray();  // 格式错误时返回空数据
         if (hexStr.length() % 2 != 0)
             hexStr.prepend("0");
         data = QByteArray::fromHex(hexStr.toUtf8());
@@ -387,77 +420,52 @@ void SerialWidget::onSendTextChanged()
     {
         data = text.toUtf8();
     }
+    return data;
+}
 
-    QByteArray resultData;
+// 根据是否启用 CRC 及设定的插入模式，组合原数据和 CRC 字节，生成最终待发送数据
+QByteArray SerialWidget::getFinalSendData() const
+{
+    QByteArray data = getInputData();
+    if (data.isEmpty())
+        return data;
+
     int formatIndex = crcFormatComboBox->currentIndex();
+    QByteArray resultData;
+    QByteArray crcBytes;
+    uint crcValue = 0;
 
-    if (crcInsertPositionComboBox->currentIndex() == 0)  // Append to end 模式
+    // Append to end 模式
+    if (crcInsertPositionComboBox->currentIndex() == 0)
     {
-        uint crcValue = crc->calculateCRC(data, formatIndex);
-        QByteArray crcBytes;
-        switch (formatIndex)
-        {
-        case static_cast<int>(Crc::crcListIndex::CRC8):
-            crcBytes.append(static_cast<char>(crcValue & 0xFF));
-            break;
-        case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
-        case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
-            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
-            crcBytes.append(static_cast<char>(crcValue & 0xFF));
-            break;
-        case static_cast<int>(Crc::crcListIndex::CRC32):
-        case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
-            crcBytes.append(static_cast<char>((crcValue >> 24) & 0xFF));
-            crcBytes.append(static_cast<char>((crcValue >> 16) & 0xFF));
-            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
-            crcBytes.append(static_cast<char>(crcValue & 0xFF));
-            break;
-        default:
-            break;
-        }
+        crcValue = crc->calculateCRC(data, formatIndex);
+        crcBytes = generateCrcBytes(crcValue, formatIndex);
         resultData = data + crcBytes;
     }
-    else  // Customize 模式
+    else    // Customize 模式
     {
-        // 计算 CRC 使用的起始、结束字节位置：空或 -1 时采用默认值
-        int firstPos = crcCalculateFristSpecificByteLineEdit->text().isEmpty() ? 0 : crcCalculateFristSpecificByteLineEdit->text().toInt();
+        // 当起始位置输入为空或者小于 0、超出范围时，默认使用 0
+        int firstPos = crcCalculateFristSpecificByteLineEdit->text().isEmpty() ? 0
+                          : crcCalculateFristSpecificByteLineEdit->text().toInt();
         if (firstPos < 0 || firstPos >= data.size())
             firstPos = 0;
 
-        int lastPos = crcCalculateLastSpecificByteLineEdit->text().isEmpty() ? data.size() - 1 : crcCalculateLastSpecificByteLineEdit->text().toInt();
+        // 当结束位置输入为空或为 -1 或超出范围时，默认使用 data.size()-1
+        int lastPos = crcCalculateLastSpecificByteLineEdit->text().isEmpty() ? data.size() - 1 
+                         : crcCalculateLastSpecificByteLineEdit->text().toInt();
         if (lastPos < 0 || lastPos >= data.size())
             lastPos = data.size() - 1;
-
+            
+        // 截取用于 CRC 计算的子区间数据
         QByteArray crcData = data.mid(firstPos, lastPos - firstPos + 1);
-        uint crcValue = crc->calculateCRC(crcData, formatIndex);
-        QByteArray crcBytes;
-        switch (formatIndex)
-        {
-        case static_cast<int>(Crc::crcListIndex::CRC8):
-            crcBytes.append(static_cast<char>(crcValue & 0xFF));
-            break;
-        case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
-        case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
-            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
-            crcBytes.append(static_cast<char>(crcValue & 0xFF));
-            break;
-        case static_cast<int>(Crc::crcListIndex::CRC32):
-        case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
-            crcBytes.append(static_cast<char>((crcValue >> 24) & 0xFF));
-            crcBytes.append(static_cast<char>((crcValue >> 16) & 0xFF));
-            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
-            crcBytes.append(static_cast<char>(crcValue & 0xFF));
-            break;
-        default:
-            break;
-        }
+        crcValue = crc->calculateCRC(crcData, formatIndex);
+        crcBytes = generateCrcBytes(crcValue, formatIndex);
 
-        // 获取用户指定的插入位置
         bool ok;
         int insertPos = crcInsertSpecificByteLineEdit->text().toInt(&ok);
+        // 判断插入位置无效时采用默认追加模式
         if (!ok || insertPos < 0 || insertPos > data.size())
         {
-            // 若为空或 -1，则默认在末尾插入
             resultData = data + crcBytes;
         }
         else
@@ -466,9 +474,64 @@ void SerialWidget::onSendTextChanged()
             resultData.insert(insertPos, crcBytes);
         }
     }
+    return resultData;
+}
 
-    // 以 HEX 格式显示最终待发送数据到 crcResultLineEdit（大写、空格分隔）
-    crcResultLineEdit->setText(resultData.toHex(' ').toUpper());
+// 当发送文本或CRC参数变化时，实时更新 CRC 预览框中的内容（以 HEX 格式显示最终数据）
+void SerialWidget::onSendTextChanged()
+{
+    if (!crcEnableCheckBox->isChecked())
+    {
+        crcResultLineEdit->clear();
+        return;
+    }
+
+    QByteArray finalData = getFinalSendData();
+    crcResultLineEdit->setText(finalData.toHex(' ').toUpper());
+}
+
+void SerialWidget::sendData()
+{
+    QByteArray data;
+    if (crcEnableCheckBox->isChecked())
+    {
+        // 直接使用 CRC 预览框内的内容作为最终待发送数据
+        QString resultStr = crcResultLineEdit->text().remove(" ");
+        data = QByteArray::fromHex(resultStr.toUtf8());
+    }
+    else
+    {
+        QString dataStr = sendTextEdit->toPlainText();
+        if (hexSendCheckBox->isChecked())
+        {
+            dataStr = dataStr.replace(" ", "").replace("\n", "");
+            QRegExp hexRegExp("^[0-9A-Fa-f]+$");
+            if (!hexRegExp.exactMatch(dataStr))
+            {
+                QMessageBox::warning(this, "Invalid HEX Data",
+                                     "Please enter valid HEX characters (0-9, A-F).");
+                return;
+            }
+            if (dataStr.length() % 2 != 0)
+                dataStr.prepend("0");
+            data = QByteArray::fromHex(dataStr.toUtf8());
+        }
+        else
+        {
+            data = dataStr.toUtf8();
+        }
+    }
+
+    if (sendNewRowCheckbox->isChecked())
+    {
+        data.append(0x0D).append(0x0A);
+    }
+
+    serialPortManager->sendData(data);
+    sentBytes += data.size();
+    updateStatusLabel();
+    logMessage("Sent: " + (hexSendCheckBox->isChecked() ?
+                     data.toHex(' ').toUpper() : data));
 }
 
 void SerialWidget::initSearchDialog()
@@ -532,50 +595,6 @@ void SerialWidget::multiSendData(QString &dataStr)
     else
     {
         data = dataStr.toUtf8();
-    }
-
-    if (sendNewRowCheckbox->isChecked())
-    {
-        data.append(0x0D).append(0x0A);
-    }
-
-    serialPortManager->sendData(data);
-    sentBytes += data.size();
-    updateStatusLabel();
-    logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
-}
-
-void SerialWidget::sendData()
-{
-    QByteArray data;
-    if (crcEnableCheckBox->isChecked())
-    {
-        // 直接使用 crcResultLineEdit 的内容作为最终待发送数据
-        QString resultStr = crcResultLineEdit->text().remove(" ");
-        data = QByteArray::fromHex(resultStr.toUtf8());
-    }
-    else
-    {
-        QString dataStr = sendTextEdit->toPlainText();
-        if (hexSendCheckBox->isChecked())
-        {
-            dataStr = dataStr.replace(" ", "").replace("\n", "");
-            QRegExp hexRegExp("^[0-9A-Fa-f]+$");
-            if (!hexRegExp.exactMatch(dataStr))
-            {
-                QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
-                return;
-            }
-            if (dataStr.length() % 2 != 0)
-            {
-                dataStr.prepend("0");
-            }
-            data = QByteArray::fromHex(dataStr.toUtf8());
-        }
-        else
-        {
-            data = dataStr.toUtf8();
-        }
     }
 
     if (sendNewRowCheckbox->isChecked())

@@ -64,7 +64,9 @@ private:
     void initSearchDialog();
     void loadSettings();
     void saveSettings();
-    uint calculateCRC(const QByteArray &data, int formatIndex);
+    QByteArray generateCrcBytes(uint crcValue, int formatIndex) const;
+    QByteArray getInputData() const;
+    QByteArray getFinalSendData() const;
 
 
     QSettings *serialSettings;
