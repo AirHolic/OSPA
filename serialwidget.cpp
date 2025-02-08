@@ -239,9 +239,9 @@ void SerialWidget::initUI()
     crcCalculateFristSpecificByteLineEdit = new QLineEdit(this);
     crcInsertPositionLabel2 = new QLabel("th byte to the ", this);
     crcCalculateLastSpecificByteLineEdit = new QLineEdit(this);
+    crcCalculateLastSpecificByteLineEdit->setPlaceholderText("-1 = last");
     crcInsertPositionLabel3 = new QLabel("th byte, and insert it after the ", this);
     crcInsertSpecificByteLineEdit = new QLineEdit(this);
-    //crcInsertSpecificByteLineEdit->setPlaceholderText("Enter byte position or -1 for last byte");
     crcInsertPositionLabel4 = new QLabel("th byte.", this);
     crcInsertSpecificByteLineEdit->setValidator(new QIntValidator(this));
     crcInsertPositionLayout->addWidget(crcInsertPositionLabel1);
@@ -353,6 +353,122 @@ void SerialWidget::initConnections()
     connect(multiSendUnit7, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
     connect(multiSendUnit8, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
     connect(multiSendUnit9, &serialMultiSendUnit::clickPushButton, this, &SerialWidget::multiSendData);
+
+    connect(sendTextEdit, &QTextEdit::textChanged, this, &SerialWidget::onSendTextChanged);
+    connect(crcInsertSpecificByteLineEdit, &QLineEdit::textChanged, this, &SerialWidget::onSendTextChanged);
+    connect(crcCalculateFristSpecificByteLineEdit, &QLineEdit::textChanged, this, &SerialWidget::onSendTextChanged);
+    connect(crcCalculateLastSpecificByteLineEdit, &QLineEdit::textChanged, this, &SerialWidget::onSendTextChanged);
+}
+
+void SerialWidget::onSendTextChanged()
+{
+    if (!crcEnableCheckBox->isChecked())
+    {
+        crcResultLineEdit->clear();
+        return;
+    }
+
+    QString text = sendTextEdit->toPlainText();
+    QByteArray data;
+    if (hexSendCheckBox->isChecked())
+    {
+        QString hexStr = text.simplified().remove(" ");
+        QRegExp hexRegExp("^[0-9A-Fa-f]+$");
+        if (!hexRegExp.exactMatch(hexStr))
+        {
+            crcResultLineEdit->setText("Invalid HEX Data");
+            return;
+        }
+        if (hexStr.length() % 2 != 0)
+            hexStr.prepend("0");
+        data = QByteArray::fromHex(hexStr.toUtf8());
+    }
+    else
+    {
+        data = text.toUtf8();
+    }
+
+    QByteArray resultData;
+    int formatIndex = crcFormatComboBox->currentIndex();
+
+    if (crcInsertPositionComboBox->currentIndex() == 0)  // Append to end 模式
+    {
+        uint crcValue = crc->calculateCRC(data, formatIndex);
+        QByteArray crcBytes;
+        switch (formatIndex)
+        {
+        case static_cast<int>(Crc::crcListIndex::CRC8):
+            crcBytes.append(static_cast<char>(crcValue & 0xFF));
+            break;
+        case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
+        case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
+            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
+            crcBytes.append(static_cast<char>(crcValue & 0xFF));
+            break;
+        case static_cast<int>(Crc::crcListIndex::CRC32):
+        case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
+            crcBytes.append(static_cast<char>((crcValue >> 24) & 0xFF));
+            crcBytes.append(static_cast<char>((crcValue >> 16) & 0xFF));
+            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
+            crcBytes.append(static_cast<char>(crcValue & 0xFF));
+            break;
+        default:
+            break;
+        }
+        resultData = data + crcBytes;
+    }
+    else  // Customize 模式
+    {
+        // 计算 CRC 使用的起始、结束字节位置：空或 -1 时采用默认值
+        int firstPos = crcCalculateFristSpecificByteLineEdit->text().isEmpty() ? 0 : crcCalculateFristSpecificByteLineEdit->text().toInt();
+        if (firstPos < 0 || firstPos >= data.size())
+            firstPos = 0;
+
+        int lastPos = crcCalculateLastSpecificByteLineEdit->text().isEmpty() ? data.size() - 1 : crcCalculateLastSpecificByteLineEdit->text().toInt();
+        if (lastPos < 0 || lastPos >= data.size())
+            lastPos = data.size() - 1;
+
+        QByteArray crcData = data.mid(firstPos, lastPos - firstPos + 1);
+        uint crcValue = crc->calculateCRC(crcData, formatIndex);
+        QByteArray crcBytes;
+        switch (formatIndex)
+        {
+        case static_cast<int>(Crc::crcListIndex::CRC8):
+            crcBytes.append(static_cast<char>(crcValue & 0xFF));
+            break;
+        case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
+        case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
+            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
+            crcBytes.append(static_cast<char>(crcValue & 0xFF));
+            break;
+        case static_cast<int>(Crc::crcListIndex::CRC32):
+        case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
+            crcBytes.append(static_cast<char>((crcValue >> 24) & 0xFF));
+            crcBytes.append(static_cast<char>((crcValue >> 16) & 0xFF));
+            crcBytes.append(static_cast<char>((crcValue >> 8) & 0xFF));
+            crcBytes.append(static_cast<char>(crcValue & 0xFF));
+            break;
+        default:
+            break;
+        }
+
+        // 获取用户指定的插入位置
+        bool ok;
+        int insertPos = crcInsertSpecificByteLineEdit->text().toInt(&ok);
+        if (!ok || insertPos < 0 || insertPos > data.size())
+        {
+            // 若为空或 -1，则默认在末尾插入
+            resultData = data + crcBytes;
+        }
+        else
+        {
+            resultData = data;
+            resultData.insert(insertPos, crcBytes);
+        }
+    }
+
+    // 以 HEX 格式显示最终待发送数据到 crcResultLineEdit（大写、空格分隔）
+    crcResultLineEdit->setText(resultData.toHex(' ').toUpper());
 }
 
 void SerialWidget::initSearchDialog()
@@ -431,93 +547,35 @@ void SerialWidget::multiSendData(QString &dataStr)
 
 void SerialWidget::sendData()
 {
-    QString dataStr = sendTextEdit->toPlainText();
     QByteArray data;
-    if (hexSendCheckBox->isChecked())
+    if (crcEnableCheckBox->isChecked())
     {
-        dataStr = dataStr.replace(" ", "").replace("\n", "");
-        QRegExp hexRegExp("^[0-9A-Fa-f]+$");
-        if (!hexRegExp.exactMatch(dataStr))
-        {
-            QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
-            return;
-        }
-        if (dataStr.length() % 2 != 0)
-        {
-            dataStr.prepend("0");
-        }
-        data = QByteArray::fromHex(dataStr.toUtf8());
+        // 直接使用 crcResultLineEdit 的内容作为最终待发送数据
+        QString resultStr = crcResultLineEdit->text().remove(" ");
+        data = QByteArray::fromHex(resultStr.toUtf8());
     }
     else
     {
-        data = dataStr.toUtf8();
-    }
-
-    // CRC处理
-    if (crcEnableCheckBox->isChecked())
-    {
-        QByteArray crcData;
-        if (crcInsertPositionComboBox->currentIndex() == 0) // Append to end
+        QString dataStr = sendTextEdit->toPlainText();
+        if (hexSendCheckBox->isChecked())
         {
-            crcData = data;
-        }
-        else // Customize
-        {
-            int firstPosition = crcCalculateFristSpecificByteLineEdit->text().toInt();
-            int lastPosition = crcCalculateLastSpecificByteLineEdit->text().toInt();
-            //int specificPosition = crcInsertSpecificByteLineEdit->text().toInt();
-
-            if (firstPosition == -1 || firstPosition >= data.size())
+            dataStr = dataStr.replace(" ", "").replace("\n", "");
+            QRegExp hexRegExp("^[0-9A-Fa-f]+$");
+            if (!hexRegExp.exactMatch(dataStr))
             {
-                firstPosition = 0;
+                QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
+                return;
             }
-            if (lastPosition == -1 || lastPosition >= data.size())
+            if (dataStr.length() % 2 != 0)
             {
-                lastPosition = data.size() - 1;
+                dataStr.prepend("0");
             }
-
-            crcData = data.mid(firstPosition, lastPosition - firstPosition + 1);
+            data = QByteArray::fromHex(dataStr.toUtf8());
         }
-        uint crcValue = crc->calculateCRC(crcData, crcFormatComboBox->currentIndex());
-
-        // 转换为相应格式并添加到数据中
-        QByteArray crcBytes;
-        switch(crcFormatComboBox->currentIndex())
+        else
         {
-            case static_cast<int>(Crc::crcListIndex::CRC8):
-                crcBytes.append(crcValue);
-                break;
-            case static_cast<int>(Crc::crcListIndex::CRC16_CCITT):
-            case static_cast<int>(Crc::crcListIndex::CRC16_XMODEM):
-                crcBytes.append(crcValue >> 8).append(crcValue & 0xFF);
-                break;
-            case static_cast<int>(Crc::crcListIndex::CRC32):
-            case static_cast<int>(Crc::crcListIndex::CRC32_MPEG2):
-                crcBytes.append((crcValue >> 24) & 0xFF).append((crcValue >> 16) & 0xFF)
-                         .append((crcValue >> 8) & 0xFF).append(crcValue & 0xFF);
-                break;
-            default:
-                break;
+            data = dataStr.toUtf8();
         }
-
-        if (crcInsertPositionComboBox->currentIndex() == 0) // Append to end
-        {
-            data.append(crcBytes);
-        }
-        else // Customize
-        {
-            int position = crcInsertSpecificByteLineEdit->text().toInt();
-            if (position == -1 || position >= data.size())
-            {
-                data.append(crcBytes);
-            }
-            else
-            {
-                data.insert(position, crcBytes);
-            }
-        }
-
-        crcResultLineEdit->setText(QString("%1").arg(crcValue, 0, 16));
     }
 
     if (sendNewRowCheckbox->isChecked())
@@ -529,14 +587,6 @@ void SerialWidget::sendData()
     sentBytes += data.size();
     updateStatusLabel();
     logMessage("Sent: " + (hexSendCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
-}
-
-// 添加CRC计算函数
-uint SerialWidget::calculateCRC(const QByteArray &data, int formatIndex)
-{
-    // 这里实现具体的CRC算法
-    // 根据formatIndex选择不同的CRC算法（如CRC-8、CRC-16、CRC-32）
-    // 返回计算出的CRC值
 }
 
 void SerialWidget::multiCycleTimer(int state)

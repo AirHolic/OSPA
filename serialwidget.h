@@ -56,6 +56,7 @@ private slots:
     void clearReceiveArea();
     void onDataReceived(const QByteArray &data);
     void onErrorOccurred(const QString &error);
+    void onSendTextChanged();
 
 private:
     void initUI();
