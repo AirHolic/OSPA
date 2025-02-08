@@ -208,10 +208,6 @@ void SerialWidget::initUI()
     ymodemLayout->addWidget(ymodemWidget);
     sendTabWidget->addTab(ymodemSendWidget, "YModem");
 
-    // 将上下布局添加到主布局
-    mainLayout->addLayout(upLayout);
-    mainLayout->addLayout(downLayout);
-
     // 添加底部栏
     mainLayout->addWidget(statusLabel);
 
@@ -760,6 +756,7 @@ void SerialWidget::logMessage(const QString &message)
 
 void SerialWidget::loadSettings()
 {
+    // 加载串口相关配置
     baudRateComboBox->setCurrentText(serialSettings->value(portName + "/BaudRate", "9600").toString());
     dataBitsComboBox->setCurrentText(serialSettings->value(portName + "/DataBits", "8").toString());
     parityComboBox->setCurrentText(serialSettings->value(portName + "/Parity", "None").toString());
@@ -769,6 +766,7 @@ void SerialWidget::loadSettings()
     hexSendCheckBox->setChecked(serialSettings->value(portName + "/HexSend", false).toBool());
     sendNewRowCheckbox->setChecked(serialSettings->value(portName + "/NewRow", false).toBool());
 
+    // 加载多条发送配置
     multiSendUnit0->getLineEdit()->setText(multiSendSettings->value(portName + "/Unit0", "").toString());
     multiSendUnit0->getCheckBox()->setChecked(multiSendSettings->value(portName + "/Unit0/CheckBox", false).toBool());
 
@@ -804,6 +802,7 @@ void SerialWidget::loadSettings()
 void SerialWidget::saveSettings()
 {
     serialSettings->beginGroup(portName);
+    // 保存串口相关设置
     serialSettings->setValue("BaudRate", baudRateComboBox->currentText());
     serialSettings->setValue("DataBits", dataBitsComboBox->currentText());
     serialSettings->setValue("Parity", parityComboBox->currentText());
@@ -814,7 +813,7 @@ void SerialWidget::saveSettings()
     serialSettings->setValue("NewRow", sendNewRowCheckbox->isChecked());
     serialSettings->endGroup();
     serialSettings->sync();
-
+    // 保存多条发送设置
     multiSendSettings->beginGroup(portName);
 
     multiSendSettings->setValue("Unit0", multiSendUnit0->getLineText());
