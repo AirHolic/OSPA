@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SearchDialog</class>
  <widget class="QDialog" name="SearchDialog">
@@ -10,8 +11,65 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Search</string>
   </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
+  <property name="windowFlags">
+   <set>Qt::WindowContextHelpButtonHint</set>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLineEdit" name="searchLineEdit"/>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="caseSensitiveCheckBox">
+     <property name="text">
+      <string>Case Sensitive</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="regexCheckBox">
+     <property name="text">
+      <string>Regular Expression</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="wholeWordCheckBox">
+     <property name="text">
+      <string>Whole Word</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <widget class="QPushButton" name="findNextButton">
+       <property name="text">
+        <string>Find Next</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="findPreviousButton">
+       <property name="text">
+        <string>Find Previous</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string>0 of 0</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

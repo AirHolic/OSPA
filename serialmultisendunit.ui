@@ -7,45 +7,35 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>50</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>serialMultiSendUnit</string>
   </property>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>130</y>
-     <width>216</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <widget class="QCheckBox" name="checkBox">
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="lineEdit">
-      <property name="text">
-       <string>sdfdsfdsfdsfdsfdsdsfdsfsdfs</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QCheckBox" name="multiSendUnitCheckBox">
+     <property name="text">
+      <string></string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="multiSendUnitLineEdit">
+     <property name="text">
+      <string></string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="multiSendUnitPushButton">
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

@@ -6,215 +6,460 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>400</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="mainLayout">
+   <!-- 上部布局：接收区及其侧边控件 -->
    <item>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="labelBaudRate">
-       <property name="text">
-        <string>Baud Rate:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="baudRateComboBox">
-       <item>
-        <property name="text">
-         <string>9600</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>19200</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>38400</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>57600</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>115200</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="labelDataBits">
-       <property name="text">
-        <string>Data Bits:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="dataBitsComboBox">
-       <item>
-        <property name="text">
-         <string>5</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>6</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>7</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>8</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="labelParity">
-       <property name="text">
-        <string>Parity:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QComboBox" name="parityComboBox">
-       <item>
-        <property name="text">
-         <string>None</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Even</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Odd</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Mark</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Space</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelStopBits">
-       <property name="text">
-        <string>Stop Bits:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="stopBitsComboBox">
-       <item>
-        <property name="text">
-         <string>1</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.5</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>2</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="labelFlowControl">
-       <property name="text">
-        <string>Flow Control:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QComboBox" name="flowControlComboBox">
-       <item>
-        <property name="text">
-         <string>None</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Hardware</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Software</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="upLayout">
      <item>
-      <widget class="QPushButton" name="connectButton">
-       <property name="text">
-        <string>Connect</string>
+      <widget class="QTextEdit" name="receiveTextEdit">
+       <property name="readOnly">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="disconnectButton">
-       <property name="text">
-        <string>Disconnect</string>
-       </property>
+      <layout class="QVBoxLayout" name="receiveSideLayout">
+       <item>
+        <layout class="QFormLayout" name="settingsLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="labelBaudRate">
+           <property name="text">
+            <string>Baud Rate:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="baudRateComboBox">
+           <item>
+            <property name="text">
+             <string>9600</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>19200</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>38400</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>57600</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>115200</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="labelDataBits">
+           <property name="text">
+            <string>Data Bits:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="dataBitsComboBox">
+           <item>
+            <property name="text">
+             <string>5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>6</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>7</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>8</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="labelParity">
+           <property name="text">
+            <string>Parity:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="parityComboBox">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Even</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Odd</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Mark</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Space</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="labelStopBits">
+           <property name="text">
+            <string>Stop Bits:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="stopBitsComboBox">
+           <item>
+            <property name="text">
+             <string>1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>1.5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="labelFlowControl">
+           <property name="text">
+            <string>Flow Control:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="flowControlComboBox">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hardware</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Software</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="hexReceiveCheckBox">
+         <property name="text">
+          <string>HEX Receive</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="connectButton">
+         <property name="text">
+          <string>Connect</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="searchButton">
+         <property name="text">
+          <string>Search</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="clearReceiveButton">
+         <property name="text">
+          <string>Clear Receive</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <!-- 下部布局：发送区与多标签页 -->
+   <item>
+    <layout class="QHBoxLayout" name="downLayout">
+     <item>
+      <widget class="QTabWidget" name="sendTabWidget">
+       <!-- Tab Single -->
+       <widget class="QWidget" name="tabSingle">
+        <attribute name="title">
+         <string>Single</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="singleSendLayout">
+         <item>
+          <layout class="QHBoxLayout" name="singleSendUpLayout">
+           <item>
+            <widget class="QTextEdit" name="sendTextEdit"/>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="sendSideLayout">
+             <item>
+              <widget class="QCheckBox" name="hexSendCheckBox">
+               <property name="text">
+                <string>HEX Send</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="sendNewRowCheckbox">
+               <property name="text">
+                <string>Send New Row</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="sendButton">
+               <property name="text">
+                <string>Send</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <!-- CRC区域 -->
+         <item>
+          <layout class="QVBoxLayout" name="crcLayout">
+           <item>
+            <widget class="QCheckBox" name="crcEnableCheckBox">
+             <property name="text">
+              <string>Enable CRC</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="crcFormatLayout">
+             <item>
+              <widget class="QComboBox" name="crcFormatComboBox">
+               <!-- CRC 算法列表由代码添加 -->
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="crcInsertPositionComboBox">
+               <item>
+                <property name="text">
+                 <string>Append to end</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Customize</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="crcInsertPositionLayout">
+             <item>
+              <widget class="QLabel" name="crcInsertPositionLabel1">
+               <property name="text">
+                <string>Calculate the</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="crcCalculateFristSpecificByteLineEdit"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="crcInsertPositionLabel2">
+               <property name="text">
+                <string>th byte to the</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="crcCalculateLastSpecificByteLineEdit">
+               <property name="placeholderText">
+                <string>-1 = last</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="crcInsertPositionLabel3">
+               <property name="text">
+                <string>th byte, and insert it after the</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="crcInsertSpecificByteLineEdit"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="crcInsertPositionLabel4">
+               <property name="text">
+                <string>th byte.</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="crcResultLayout">
+             <item>
+              <widget class="QLabel" name="crcResultLabel">
+               <property name="text">
+                <string>CRC Result:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="crcResultLineEdit">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <!-- Tab Multi -->
+       <widget class="QWidget" name="tabMulti">
+        <attribute name="title">
+         <string>Multi</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="multiSendLayout">
+         <item>
+          <layout class="QGridLayout" name="multiSendGridLayout">
+           <item row="0" column="0">
+            <widget class="QWidget" name="multiSendUnit0"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QWidget" name="multiSendUnit1"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QWidget" name="multiSendUnit2"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QWidget" name="multiSendUnit3"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QWidget" name="multiSendUnit4"/>
+           </item>
+           <item row="2" column="1">
+            <widget class="QWidget" name="multiSendUnit5"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QWidget" name="multiSendUnit6"/>
+           </item>
+           <item row="3" column="1">
+            <widget class="QWidget" name="multiSendUnit7"/>
+           </item>
+           <item row="4" column="0">
+            <widget class="QWidget" name="multiSendUnit8"/>
+           </item>
+           <item row="4" column="1">
+            <widget class="QWidget" name="multiSendUnit9"/>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="multiSendSideLayout">
+           <item>
+            <widget class="QCheckBox" name="multiCycleSendCheckBox">
+             <property name="text">
+              <string>Cycle Send</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="multiCycleSendLayout">
+             <item>
+              <widget class="QLabel" name="multiCycleSendLabel">
+               <property name="text">
+                <string>cycle</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="multiCycleSendLineEdit">
+               <property name="text">
+                <string>1000</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="multiCycleSendUnitLabel">
+               <property name="text">
+                <string>ms</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <!-- Tab YModem -->
+       <widget class="QWidget" name="tabYModem">
+        <attribute name="title">
+         <string>YModem</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="ymodemLayout">
+         <item>
+          <widget class="QWidget" name="ymodemWidget"/>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
     </layout>
    </item>
+   <!-- 底部状态栏 -->
    <item>
-    <widget class="QTextEdit" name="receiveTextEdit">
-     <property name="readOnly">
-      <bool>true</bool>
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string>Sent: 0 bytes | Received: 0 bytes</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight</set>
      </property>
     </widget>
-   </item>
-   <item>
-    <widget class="QTextEdit" name="sendTextEdit"/>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QCheckBox" name="hexReceiveCheckBox">
-       <property name="text">
-        <string>HEX Receive</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="hexSendCheckBox">
-       <property name="text">
-        <string>HEX Send</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>
