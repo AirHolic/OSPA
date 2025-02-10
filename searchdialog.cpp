@@ -3,7 +3,8 @@
 SearchDialog::SearchDialog(const QString &portName, QTextEdit *textEdit, QWidget *parent)
     : QDialog(parent), textEdit(textEdit)
 {
-    setWindowTitle(portName + " - Search");
+    // 窗口标题中仅 Search 部分需要支持翻译，portName 保持原样
+    setWindowTitle(portName + " - " + tr("Search"));
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
     setModal(false); // 非模态对话框
     //setWindowFlag(Qt::FramelessWindowHint); // 无边框窗口
@@ -12,16 +13,16 @@ SearchDialog::SearchDialog(const QString &portName, QTextEdit *textEdit, QWidget
     searchLineEdit = new QLineEdit(this);
 
     // 复选框
-    caseSensitiveCheckBox = new QCheckBox("Case Sensitive", this);
-    regexCheckBox = new QCheckBox("Regular Expression", this);
-    wholeWordCheckBox = new QCheckBox("Whole Word", this);
+    caseSensitiveCheckBox = new QCheckBox(tr("Case Sensitive"), this);
+    regexCheckBox = new QCheckBox(tr("Regular Expression"), this);
+    wholeWordCheckBox = new QCheckBox(tr("Whole Word"), this);
 
     // 按钮
-    findNextButton = new QPushButton("Find Next", this);
-    findPreviousButton = new QPushButton("Find Previous", this);
+    findNextButton = new QPushButton(tr("Find Next"), this);
+    findPreviousButton = new QPushButton(tr("Find Previous"), this);
 
     // 提示信息标签
-    statusLabel = new QLabel("0 of 0", this);
+    statusLabel = new QLabel(tr("0 of 0"), this);
 
     // 布局
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -44,13 +45,11 @@ SearchDialog::SearchDialog(const QString &portName, QTextEdit *textEdit, QWidget
 
 void SearchDialog::closeEvent(QCloseEvent *)
 {
-    //setDisabled();
     setShowFlag(false);
 }
 
 void SearchDialog::reject()
 {
-    //setDisabled();
     setShowFlag(false);
     QDialog::reject();
 }
@@ -69,7 +68,7 @@ void SearchDialog::findNext()
 {
     QString searchText = searchLineEdit->text();
     if (searchText.isEmpty()) {
-        QMessageBox::warning(this, "Warning", "Please enter a search term.");
+        QMessageBox::warning(this, tr("Warning"), tr("Please enter a search term."));
         return;
     }
 
@@ -99,8 +98,8 @@ void SearchDialog::findNext()
         }
 
         if (cursor.isNull()) {
-            QMessageBox::information(this, "Search", "No matches found.");
-            statusLabel->setText("0 of 0");
+            QMessageBox::information(this, tr("Search"), tr("No matches found."));
+            statusLabel->setText(tr("0 of 0"));
         } else {
             highlightText(cursor);
             int totalMatches = findTotalMatches();
@@ -119,7 +118,7 @@ void SearchDialog::findPrevious()
 {
     QString searchText = searchLineEdit->text();
     if (searchText.isEmpty()) {
-        QMessageBox::warning(this, "Warning", "Please enter a search term.");
+        QMessageBox::warning(this, tr("Warning"), tr("Please enter a search term."));
         return;
     }
 
@@ -149,8 +148,8 @@ void SearchDialog::findPrevious()
         }
 
         if (cursor.isNull()) {
-            QMessageBox::information(this, "Search", "No matches found.");
-            statusLabel->setText("0 of 0");
+            QMessageBox::information(this, tr("Search"), tr("No matches found."));
+            statusLabel->setText(tr("0 of 0"));
         } else {
             highlightText(cursor);
             int totalMatches = findTotalMatches();

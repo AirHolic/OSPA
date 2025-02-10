@@ -1,15 +1,20 @@
 #include "mainwindow.h"
 #include "serialwidget.h"
+#include "LanguageManager.h"
+
 #include <QToolBar>
 #include <QMessageBox>
 #include <QDebug>
 #include <QVBoxLayout>
 #include <QDockWidget>
+#include <QSerialPortInfo>
+#include <QEvent>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
+    : QMainWindow(parent), langManager(lm)
 {
-    setWindowTitle("Ordinary Serial Port Assistant");
+    // 设置窗口标题
+    setWindowTitle(tr("Ordinary Serial Port Assistant"));
     setMinimumSize(800, 600);
 
     // 创建标签页控件
@@ -18,10 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
     tabWidget->setTabsClosable(true);
     tabWidget->setMovable(true);
 
-    // 连接标签页关闭事件
+    // 连接标签页关闭、双击事件
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeSerialPort);
-
-    // 连接标签页双击事件
     connect(tabWidget, &QTabWidget::tabBarDoubleClicked, this, &MainWindow::onTabDockRequested);
 
     // 创建工具栏
@@ -30,12 +33,12 @@ MainWindow::MainWindow(QWidget *parent)
     toolBar->setMovable(false);
 
     // 添加刷新串口列表按钮
-    QAction *refreshAction = new QAction("Refresh Serial Ports", this);
+    refreshAction = new QAction(tr("Refresh Serial Ports"), this);
     connect(refreshAction, &QAction::triggered, this, &MainWindow::refreshSerialPorts);
     toolBar->addAction(refreshAction);
 
     // 添加打开串口按钮
-    QAction *openAction = new QAction("Open Serial Port", this);
+    openAction = new QAction(tr("Open Serial Port"), this);
     connect(openAction, &QAction::triggered, this, &MainWindow::openSerialPort);
     toolBar->addAction(openAction);
 
@@ -43,6 +46,21 @@ MainWindow::MainWindow(QWidget *parent)
     comboBoxSerialPorts = new QComboBox(this);
     comboBoxSerialPorts->setMinimumWidth(150);
     toolBar->addWidget(comboBoxSerialPorts);
+
+    // 添加语言切换下拉框
+    languageComboBox = new QComboBox(this);
+    languageComboBox->setMinimumWidth(120);
+    languageComboBox->addItem("简体中文", "zh_CN");
+    languageComboBox->addItem("English", "en_US");
+    languageComboBox->setCurrentIndex(0); // 默认简体中文
+    toolBar->addWidget(languageComboBox);
+
+    // 连接语言下拉框信号
+    connect(languageComboBox, &QComboBox::currentTextChanged,
+            this, [this](const QString &){
+                QString code = languageComboBox->currentData().toString();
+                switchLanguage(code);
+            });
 
     // 刷新串口列表
     refreshSerialPorts();
@@ -67,7 +85,7 @@ void MainWindow::refreshSerialPorts()
 void MainWindow::openSerialPort()
 {
     if (availablePorts.isEmpty()) {
-        QMessageBox::warning(this, "No Serial Ports", "No serial ports available.");
+        QMessageBox::warning(this, tr("No Serial Ports"), tr("No serial ports available."));
         return;
     }
 
@@ -99,7 +117,7 @@ void MainWindow::openSerialPort()
     serialPortWidgets.append(widget);
     tabWidget->setCurrentWidget(widget);
 
-    // 连接关闭信号
+    // 连接串口控件的关闭请求信号
     connect(widget, &SerialWidget::closeRequested, this, &MainWindow::closeSerialPort);
 }
 
@@ -116,14 +134,15 @@ void MainWindow::onTabDockRequested(int index)
 {
     QWidget *widget = tabWidget->widget(index);
     if (widget) {
-        // 创建 QDockWidget
+        // 创建 QDockWidget，并将标签页中的控件移动到新窗口
         QDockWidget *dockWidget = new QDockWidget(tabWidget->tabText(index), this);
-        dockWidget->setAttribute(Qt::WA_DeleteOnClose); // 关闭时删除
-        dockWidget->setWidget(widget); // 将控件移动到 QDockWidget
+        dockWidget->setAttribute(Qt::WA_DeleteOnClose);
+        dockWidget->setWidget(widget);
         addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 
-        // 连接窗口拖回事件
-        connect(dockWidget, &QDockWidget::topLevelChanged, this, [this, dockWidget](bool topLevel) {
+        // 当窗口由独立状态拖回后重新放回标签页
+        connect(dockWidget, &QDockWidget::topLevelChanged, this,
+                [this, dockWidget](bool topLevel) {
             if (!topLevel) {
                 onDockTabRequested(dockWidget->widget());
             }
@@ -135,13 +154,27 @@ void MainWindow::onDockTabRequested(QWidget *widget)
 {
     QDockWidget *dockWidget = qobject_cast<QDockWidget *>(widget->parentWidget());
     if (dockWidget) {
-        // 移除 QDockWidget
         removeDockWidget(dockWidget);
-
-        // 将控件重新添加到标签页
         tabWidget->addTab(widget, dockWidget->windowTitle());
-
-        // 删除 QDockWidget
         dockWidget->deleteLater();
+    }
+}
+
+void MainWindow::switchLanguage(const QString &languageCode)
+{
+    if (langManager) {
+        langManager->loadLanguage(languageCode);
+    }
+}
+
+// 重写 changeEvent，在语言切换时更新UI
+void MainWindow::changeEvent(QEvent *event)
+{
+    QMainWindow::changeEvent(event);
+    if(event->type() == QEvent::LanguageChange) {
+        setWindowTitle(tr("Ordinary Serial Port Assistant"));
+        refreshAction->setText(tr("Refresh Serial Ports"));
+        openAction->setText(tr("Open Serial Port"));
+        // 如果其他控件需要更新文本，也在此添加更新代码
     }
 }

@@ -20,7 +20,8 @@
 #include <QValidator>
 
 SerialWidget::SerialWidget(const QString &portName, QWidget *parent)
-    : QWidget(parent), portName(portName), serialPortManager(new SerialManager(this)), sentBytes(0), receivedBytes(0)
+    : QWidget(parent), portName(portName),
+      serialPortManager(new SerialManager(this)), sentBytes(0), receivedBytes(0)
 {
     serialSettings = new QSettings("serialconfig.ini", QSettings::IniFormat, this);
     multiSendSettings = new QSettings("multisendconfig.ini", QSettings::IniFormat, this);
@@ -36,7 +37,6 @@ SerialWidget::~SerialWidget()
 }
 
 /* Event */
-
 void SerialWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
@@ -54,7 +54,6 @@ void SerialWidget::hideEvent(QHideEvent *event)
         searchDialog->hide();
     }
 }
-
 /* Event */
 
 void SerialWidget::openSearchDialog()
@@ -85,27 +84,27 @@ void SerialWidget::initUI()
     dataBitsComboBox->addItems({"5", "6", "7", "8"});
 
     parityComboBox = new QComboBox(this);
-    parityComboBox->addItems({"None", "Even", "Odd", "Mark", "Space"});
+    parityComboBox->addItems({tr("None"), tr("Even"), tr("Odd"), tr("Mark"), tr("Space")});
 
     stopBitsComboBox = new QComboBox(this);
     stopBitsComboBox->addItems({"1", "1.5", "2"});
 
     flowControlComboBox = new QComboBox(this);
-    flowControlComboBox->addItems({"None", "Hardware", "Software"});
+    flowControlComboBox->addItems({tr("None"), tr("Hardware"), tr("Software")});
 
     // --------------------- 按钮 ---------------------
-    connectButton = new QPushButton("Connect", this);
-    sendButton = new QPushButton("Send", this);
-    searchButton = new QPushButton("Search", this);
-    clearReceiveButton = new QPushButton("Clear Receive", this);
+    connectButton = new QPushButton(tr("Connect"), this);
+    sendButton = new QPushButton(tr("Send"), this);
+    searchButton = new QPushButton(tr("Search"), this);
+    clearReceiveButton = new QPushButton(tr("Clear Receive"), this);
 
     // --------------------- 复选框 ---------------------
-    hexReceiveCheckBox = new QCheckBox("HEX Receive", this);
-    hexSendCheckBox = new QCheckBox("HEX Send", this);
-    sendNewRowCheckbox = new QCheckBox("Send New Row", this);
+    hexReceiveCheckBox = new QCheckBox(tr("HEX Receive"), this);
+    hexSendCheckBox = new QCheckBox(tr("HEX Send"), this);
+    sendNewRowCheckbox = new QCheckBox(tr("Send New Row"), this);
 
     // --------------------- 状态栏 ---------------------
-    statusLabel = new QLabel("Sent: 0 bytes | Received: 0 bytes", this);
+    statusLabel = new QLabel(tr("Sent: 0 bytes | Received: 0 bytes"), this);
     statusLabel->setAlignment(Qt::AlignRight);
 
     // --------------------- 主布局 ---------------------
@@ -117,11 +116,11 @@ void SerialWidget::initUI()
 
     // 串口设置和其他控件的侧边布局
     QFormLayout *settingsLayout = new QFormLayout;
-    settingsLayout->addRow("Baud Rate:", baudRateComboBox);
-    settingsLayout->addRow("Data Bits:", dataBitsComboBox);
-    settingsLayout->addRow("Parity:", parityComboBox);
-    settingsLayout->addRow("Stop Bits:", stopBitsComboBox);
-    settingsLayout->addRow("Flow Control:", flowControlComboBox);
+    settingsLayout->addRow(tr("Baud Rate:"), baudRateComboBox);
+    settingsLayout->addRow(tr("Data Bits:"), dataBitsComboBox);
+    settingsLayout->addRow(tr("Parity:"), parityComboBox);
+    settingsLayout->addRow(tr("Stop Bits:"), stopBitsComboBox);
+    settingsLayout->addRow(tr("Flow Control:"), flowControlComboBox);
 
     QVBoxLayout *receiveSideLayout = new QVBoxLayout;
     receiveSideLayout->addLayout(settingsLayout);
@@ -142,7 +141,7 @@ void SerialWidget::initUI()
     QHBoxLayout *singleSendUpLayout = new QHBoxLayout;
     singleSendLayout->addLayout(singleSendUpLayout);
     singleSendWidget->setLayout(singleSendLayout);
-    sendTabWidget->addTab(singleSendWidget, "Single");
+    sendTabWidget->addTab(singleSendWidget, tr("Single"));
     singleSendUpLayout->addWidget(sendTextEdit);
 
     // 发送区侧边：HEX发送 & 新行发送 & 发送按钮
@@ -179,18 +178,18 @@ void SerialWidget::initUI()
     multiSendGridLayout->addWidget(multiSendUnit9, 4, 1);
     multiSendLayout->addLayout(multiSendGridLayout);
     multiSendWidget->setLayout(multiSendLayout);
-    sendTabWidget->addTab(multiSendWidget, "Multi");
+    sendTabWidget->addTab(multiSendWidget, tr("Multi"));
 
     // 多条发送区侧边布局
     multiCycleSendSideLayout = new QVBoxLayout;
     QHBoxLayout *multiCycleSendLayout = new QHBoxLayout;
 
-    multiCycleSendCheckBox = new QCheckBox("Cycle Send", this);
+    multiCycleSendCheckBox = new QCheckBox(tr("Cycle Send"), this);
     multiCycleSendLineEdit = new QLineEdit(this);
     multiCycleSendLineEdit->setText("1000");
     multiCycleSendLineEdit->setValidator(new QIntValidator(1, 1000, this));
-    multiCycleSendLabel = new QLabel("cycle", this);
-    multiCycleSendUnitLabel = new QLabel("ms", this);
+    multiCycleSendLabel = new QLabel(tr("cycle"), this);
+    multiCycleSendUnitLabel = new QLabel(tr("ms"), this);
 
     multiCycleSendSideLayout->addWidget(multiCycleSendCheckBox);
     multiCycleSendLayout->addWidget(multiCycleSendLabel);
@@ -206,7 +205,7 @@ void SerialWidget::initUI()
     ymodemWidget = new SerialProtocolTransmission(this);
     QVBoxLayout *ymodemLayout = new QVBoxLayout(ymodemSendWidget);
     ymodemLayout->addWidget(ymodemWidget);
-    sendTabWidget->addTab(ymodemSendWidget, "YModem");
+    sendTabWidget->addTab(ymodemSendWidget, tr("YModem"));
 
     // 添加底部栏
     mainLayout->addWidget(statusLabel);
@@ -220,27 +219,29 @@ void SerialWidget::initUI()
     QVBoxLayout *crcLayout = new QVBoxLayout;
     singleSendLayout->addLayout(crcLayout);
 
-    crcEnableCheckBox = new QCheckBox("Enable CRC", this);
+    crcEnableCheckBox = new QCheckBox(tr("Enable CRC"), this);
     crcLayout->addWidget(crcEnableCheckBox);
 
     QHBoxLayout *crcFormatLayout = new QHBoxLayout;
     crcFormatComboBox = new QComboBox(this);
     crcFormatComboBox->addItems(crc->crcList);
     crcInsertPositionComboBox = new QComboBox(this);
-    crcInsertPositionComboBox->addItems({"Append to end", "Customize"});
+    crcInsertPositionComboBox->addItems({tr("Append to end"), tr("Customize")});
     crcFormatLayout->addWidget(crcFormatComboBox);
     crcFormatLayout->addWidget(crcInsertPositionComboBox);
     crcLayout->addLayout(crcFormatLayout);
 
     QHBoxLayout *crcInsertPositionLayout = new QHBoxLayout;
-    crcInsertPositionLabel1 = new QLabel("Calculate the ", this);
+    crcInsertPositionLabel1 = new QLabel(tr("Calculate the "), this);
     crcCalculateFristSpecificByteLineEdit = new QLineEdit(this);
-    crcInsertPositionLabel2 = new QLabel("th byte to the ", this);
+    crcCalculateFristSpecificByteLineEdit->setPlaceholderText(tr("0 = first"));
+    crcInsertPositionLabel2 = new QLabel(tr("th byte to the "), this);
     crcCalculateLastSpecificByteLineEdit = new QLineEdit(this);
-    crcCalculateLastSpecificByteLineEdit->setPlaceholderText("-1 = last");
-    crcInsertPositionLabel3 = new QLabel("th byte, and insert it after the ", this);
+    crcCalculateLastSpecificByteLineEdit->setPlaceholderText(tr("-1 = last"));
+    crcInsertPositionLabel3 = new QLabel(tr("th byte, and insert it after the "), this);
     crcInsertSpecificByteLineEdit = new QLineEdit(this);
-    crcInsertPositionLabel4 = new QLabel("th byte.", this);
+    crcInsertSpecificByteLineEdit->setPlaceholderText(tr("-1 = last"));
+    crcInsertPositionLabel4 = new QLabel(tr("th byte."), this);
     crcInsertSpecificByteLineEdit->setValidator(new QIntValidator(this));
     crcInsertPositionLayout->addWidget(crcInsertPositionLabel1);
     crcInsertPositionLayout->addWidget(crcCalculateFristSpecificByteLineEdit);
@@ -252,7 +253,7 @@ void SerialWidget::initUI()
     crcLayout->addLayout(crcInsertPositionLayout);
 
     QHBoxLayout *crcResultLayout = new QHBoxLayout;
-    crcResultLabel = new QLabel("CRC Result: ", this);
+    crcResultLabel = new QLabel(tr("CRC Result: "), this);
     crcResultLineEdit = new QLineEdit(this);
     crcResultLineEdit->setReadOnly(true);
     crcResultLayout->addWidget(crcResultLabel);
@@ -504,8 +505,8 @@ void SerialWidget::sendData()
             QRegExp hexRegExp("^[0-9A-Fa-f]+$");
             if (!hexRegExp.exactMatch(dataStr))
             {
-                QMessageBox::warning(this, "Invalid HEX Data",
-                                     "Please enter valid HEX characters (0-9, A-F).");
+                QMessageBox::warning(this, tr("Invalid HEX Data"),
+                                     tr("Please enter valid HEX characters (0-9, A-F)."));
                 return;
             }
             if (dataStr.length() % 2 != 0)
@@ -551,7 +552,7 @@ void SerialWidget::toggleConnection()
         enableUi(false);
 
         serialPortManager->disconnectSerialPort();
-        connectButton->setText("Connect");
+        connectButton->setText(tr("Connect"));
         ymodemWidget->protocolEnableUI(false);
     }
     else
@@ -563,7 +564,7 @@ void SerialWidget::toggleConnection()
                                                  stopBitsComboBox->currentIndex() + 1,
                                                  flowControlComboBox->currentIndex()))
         {
-            connectButton->setText("Disconnect");
+            connectButton->setText(tr("Disconnect"));
             enableUi(true);
             ymodemWidget->protocolEnableUI(true);
         }
@@ -579,7 +580,7 @@ void SerialWidget::multiSendData(QString &dataStr)
         QRegExp hexRegExp("^[0-9A-Fa-f]+$");
         if (!hexRegExp.exactMatch(dataStr))
         {
-            QMessageBox::warning(this, "Invalid HEX Data", "Please enter valid HEX characters (0-9, A-F).");
+            QMessageBox::warning(this, tr("Invalid HEX Data"), tr("Please enter valid HEX characters (0-9, A-F)."));
             return;
         }
         if (dataStr.length() % 2 != 0)
@@ -610,7 +611,7 @@ void SerialWidget::multiCycleTimer(int state)
     {
         if (multiCycleSendLineEdit->text().isEmpty())
         {
-            QMessageBox::warning(this, "Warning", "Please enter cycle time.");
+            QMessageBox::warning(this, tr("Warning"), tr("Please enter cycle time."));
             multiCycleSendCheckBox->setChecked(false);
             return;
         }
@@ -732,7 +733,7 @@ void SerialWidget::onDataReceived(const QByteArray &data)
 
 void SerialWidget::onErrorOccurred(const QString &error)
 {
-    QMessageBox::critical(this, "Error", error);
+    QMessageBox::critical(this, tr("Error"), error);
 }
 
 void SerialWidget::clearReceiveArea()
@@ -745,7 +746,7 @@ void SerialWidget::clearReceiveArea()
 
 void SerialWidget::updateStatusLabel()
 {
-    statusLabel->setText(QString("Sent: %1 bytes | Received: %2 bytes").arg(sentBytes).arg(receivedBytes));
+    statusLabel->setText(QString(tr("Sent: %1 bytes | Received: %2 bytes")).arg(sentBytes).arg(receivedBytes));
 }
 
 void SerialWidget::logMessage(const QString &message)

@@ -33,8 +33,8 @@ void SerialProtocolTransmission::initUI()
 
     // 文件选择部分
     QHBoxLayout *fileLayout = new QHBoxLayout;
-    openFileButton = new QPushButton("Open File", this);
-    fileLabel = new QLabel("No file selected", this);
+    openFileButton = new QPushButton(tr("Open File"), this);
+    fileLabel = new QLabel(tr("No file selected"), this);
     fileLayout->addWidget(openFileButton);
     fileLayout->addWidget(fileLabel);
 
@@ -44,7 +44,7 @@ void SerialProtocolTransmission::initUI()
     progressBar->setValue(0);
 
     // 开始传输按钮
-    startButton = new QPushButton("Start YModem Transfer", this);
+    startButton = new QPushButton(tr("Start YModem Transfer"), this);
     startButton->setEnabled(false); // 初始禁用
 
     // 添加到主布局
@@ -65,7 +65,7 @@ void SerialProtocolTransmission::protocolEnableUI(bool flag)
         startButton->setEnabled(false);
         progressBar->setRange(0, 100);
         progressBar->setValue(0);
-        fileLabel->setText("No file selected");
+        fileLabel->setText(tr("No file selected"));
         filePath.clear();
         ymodem->YmodemSendFileInterrupt();
         disconnect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
@@ -83,12 +83,12 @@ void SerialProtocolTransmission::initConnections()
 
 void SerialProtocolTransmission::openFile()
 {
-    filePath = QFileDialog::getOpenFileName(this, "Select File", "", "All Files (*)");
+    filePath = QFileDialog::getOpenFileName(this, tr("Select File"), "", tr("All Files (*)"));
     if (!filePath.isEmpty()) {
         fileLabel->setText(filePath);
         startButton->setEnabled(true); // 启用开始按钮
     } else {
-        fileLabel->setText("No file selected");
+        fileLabel->setText(tr("No file selected"));
         startButton->setEnabled(false); // 禁用开始按钮
     }
     serialWidget->enableUi(false);
@@ -124,13 +124,13 @@ int SerialProtocolTransmission::protcocolSendData(uint8_t *data, int len)
 void SerialProtocolTransmission::startYModemTransfer()
 {
     if (filePath.isEmpty()) {
-        QMessageBox::warning(this, "Warning", "Please select a file first.");
+        QMessageBox::warning(this, tr("Warning"), tr("Please select a file first."));
         return;
     }
 
     QFile ymodemFile(filePath);
     if (!ymodemFile.open(QIODevice::ReadOnly)) {
-        QMessageBox::warning(this, "Warning", "Failed to open file.");
+        QMessageBox::warning(this, tr("Warning"), tr("Failed to open file."));
         return;
     }
 
@@ -142,7 +142,7 @@ void SerialProtocolTransmission::startYModemTransfer()
     connect(serialWidget->serialPortManager, &SerialManager::dataReceived, this, [this](QByteArray data){
         protocolHexReceiveData(data);
         qDebug() << "data:" << data << endl;
-        protcocolRecvData(recvData, sizeof (recvData));
+        protcocolRecvData(recvData, sizeof(recvData));
     });
 
     connect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
@@ -179,7 +179,7 @@ void SerialProtocolTransmission::endYModemTransfer()
     progressBar->setRange(0, 100);
     progressBar->setValue(0);
     serialWidget->enableUi(true);
-    QMessageBox::information(this, "Info", "YModem transfer finished.");
+    QMessageBox::information(this, tr("Info"), tr("YModem transfer finished."));
     disconnect(ymodem, &Ymodem::ymodemSendData, this, &SerialProtocolTransmission::protcocolSendData);
     disconnect(this, &SerialProtocolTransmission::startTrasmit, ymodem, &Ymodem::YmodemSendFileStart);
 }

@@ -17,6 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     crc.cpp \
+    languagemanager.cpp \
     main.cpp \
     mainwindow.cpp \
     searchdialog.cpp \
@@ -28,6 +29,7 @@ SOURCES += \
 
 HEADERS += \
     crc.h \
+    languagemanager.h \
     mainwindow.h \
     searchdialog.h \
     serialmanager.h \
@@ -43,7 +45,16 @@ FORMS += \
     serialprotocoltransmission.ui \
     serialwidget.ui
 
+TRANSLATIONS += res/language/zh_CN.ts \
+                res/language/en_US.ts
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    res/language/zh_CN.ts
+
+RESOURCES += \
+    res.qrc

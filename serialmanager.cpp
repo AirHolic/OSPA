@@ -34,7 +34,7 @@ bool SerialManager::connectSerialPort(const QString &portName, int baudRate, int
     if (serialPort->open(QIODevice::ReadWrite)) {
         return true;
     } else {
-        emit errorOccurred("Failed to open serial port.");
+        emit errorOccurred(tr("Failed to open serial port."));
         return false;
     }
 }
@@ -55,10 +55,10 @@ void SerialManager::sendData(const QByteArray &data)
 {
     if (serialPort->isOpen()) {
         if (serialPort->write(data) == -1) {
-            emit errorOccurred("Failed to send data.");
+            emit errorOccurred(tr("Failed to send data."));
         }
     } else {
-        emit errorOccurred("Serial port is not connected.");
+        emit errorOccurred(tr("Serial port is not connected."));
     }
 }
 
