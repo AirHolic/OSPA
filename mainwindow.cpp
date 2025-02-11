@@ -9,6 +9,10 @@
 #include <QDockWidget>
 #include <QSerialPortInfo>
 #include <QEvent>
+#include <QMenuBar>
+#include <QActionGroup>
+#include <QTimer>
+#include <QToolButton>
 
 MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     : QMainWindow(parent), langManager(lm)
@@ -27,15 +31,10 @@ MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeSerialPort);
     connect(tabWidget, &QTabWidget::tabBarDoubleClicked, this, &MainWindow::onTabDockRequested);
 
-    // 创建工具栏
+    // 创建统一的工具栏（整合串口操作和语言切换）
     QToolBar *toolBar = new QToolBar(this);
     addToolBar(toolBar);
     toolBar->setMovable(false);
-
-    // 添加刷新串口列表按钮
-    refreshAction = new QAction(tr("Refresh Serial Ports"), this);
-    connect(refreshAction, &QAction::triggered, this, &MainWindow::refreshSerialPorts);
-    toolBar->addAction(refreshAction);
 
     // 添加打开串口按钮
     openAction = new QAction(tr("Open Serial Port"), this);
@@ -47,22 +46,50 @@ MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     comboBoxSerialPorts->setMinimumWidth(150);
     toolBar->addWidget(comboBoxSerialPorts);
 
-    // 添加语言切换下拉框
-    languageComboBox = new QComboBox(this);
-    languageComboBox->setMinimumWidth(120);
-    languageComboBox->addItem("简体中文", "zh_CN");
-    languageComboBox->addItem("English", "en_US");
-    languageComboBox->setCurrentIndex(0); // 默认简体中文
-    toolBar->addWidget(languageComboBox);
+    // 在添加串口下拉框后，添加一个伸缩 spacer 推动后面的控件到最右侧
+    QWidget *spacer = new QWidget(this);
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolBar->addWidget(spacer);
 
-    // 连接语言下拉框信号
-    connect(languageComboBox, &QComboBox::currentTextChanged,
-            this, [this](const QString &){
-                QString code = languageComboBox->currentData().toString();
-                switchLanguage(code);
-            });
+    // 添加语言按钮（仅显示文本，无下拉箭头）
+    QToolButton *languageButton = new QToolButton(this);
+    languageButton->setText(tr("Language"));
+    languageButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    languageButton->setArrowType(Qt::NoArrow);
+    languageButton->setPopupMode(QToolButton::InstantPopup);   // 菜单会在点击按钮后直接弹出
 
-    // 刷新串口列表
+    // 创建语言切换菜单
+    QMenu *languageMenu = new QMenu(this);
+    QActionGroup *languageActionGroup = new QActionGroup(this);
+
+    QAction *actionZh = new QAction("简体中文", this);
+    actionZh->setData("zh_CN");
+    actionZh->setCheckable(true);
+    actionZh->setChecked(true);
+    languageActionGroup->addAction(actionZh);
+    languageMenu->addAction(actionZh);
+
+    QAction *actionEn = new QAction("English", this);
+    actionEn->setData("en_US");
+    actionEn->setCheckable(true);
+    languageActionGroup->addAction(actionEn);
+    languageMenu->addAction(actionEn);
+
+    languageButton->setMenu(languageMenu);
+    toolBar->addWidget(languageButton);
+
+    // 点击动作切换语言
+    connect(languageActionGroup, &QActionGroup::triggered, this, [this](QAction *action){
+        QString code = action->data().toString();
+        switchLanguage(code);
+    });
+
+    // 自动定时刷新串口列表
+    refreshTimer = new QTimer(this);
+    connect(refreshTimer, &QTimer::timeout, this, &MainWindow::refreshSerialPorts);
+    refreshTimer->start(3000); // 每3000ms刷新一次
+
+    // 初次刷新串口列表
     refreshSerialPorts();
 }
 
@@ -75,11 +102,24 @@ void MainWindow::refreshSerialPorts()
     availablePorts = QSerialPortInfo::availablePorts();
     qDebug() << "Available ports:" << availablePorts.size();
 
-    // 更新下拉框中的串口列表
+    // 保存原来的选项文本
+    QString currentSelection = comboBoxSerialPorts->currentText();
+
+    // 更新串口下拉框内容
     comboBoxSerialPorts->clear();
+    int indexToSelect = -1;
+    int index = 0;
     for (const QSerialPortInfo &port : availablePorts) {
-        comboBoxSerialPorts->addItem(port.portName() + " " + port.description());
+        QString item = port.portName() + " " + port.description();
+        comboBoxSerialPorts->addItem(item);
+        if (item == currentSelection)
+        {
+            indexToSelect = index;
+        }
+        ++index;
     }
+    if (indexToSelect != -1)
+        comboBoxSerialPorts->setCurrentIndex(indexToSelect);
 }
 
 void MainWindow::openSerialPort()
@@ -171,10 +211,11 @@ void MainWindow::switchLanguage(const QString &languageCode)
 void MainWindow::changeEvent(QEvent *event)
 {
     QMainWindow::changeEvent(event);
-    if(event->type() == QEvent::LanguageChange) {
+    if (event->type() == QEvent::LanguageChange) {
         setWindowTitle(tr("Ordinary Serial Port Assistant"));
-        refreshAction->setText(tr("Refresh Serial Ports"));
+        // 仅更新存在的控件（由于刷新按钮已移除，此处不再更新其文本）
         openAction->setText(tr("Open Serial Port"));
+        
         // 如果其他控件需要更新文本，也在此添加更新代码
     }
 }

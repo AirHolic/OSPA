@@ -78,7 +78,7 @@ void SerialWidget::initUI()
 
     // --------------------- 串口配置控件 ---------------------
     baudRateComboBox = new QComboBox(this);
-    baudRateComboBox->addItems({"9600", "19200", "38400", "57600", "115200"});
+    baudRateComboBox->addItems({"1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "76800", "115200", "230400", "460800", "921600"});
 
     dataBitsComboBox = new QComboBox(this);
     dataBitsComboBox->addItems({"5", "6", "7", "8"});
@@ -758,7 +758,7 @@ void SerialWidget::logMessage(const QString &message)
 void SerialWidget::loadSettings()
 {
     // 加载串口相关配置
-    baudRateComboBox->setCurrentText(serialSettings->value(portName + "/BaudRate", "9600").toString());
+    baudRateComboBox->setCurrentText(serialSettings->value(portName + "/BaudRate", "115200").toString());
     dataBitsComboBox->setCurrentText(serialSettings->value(portName + "/DataBits", "8").toString());
     parityComboBox->setCurrentText(serialSettings->value(portName + "/Parity", "None").toString());
     stopBitsComboBox->setCurrentText(serialSettings->value(portName + "/StopBits", "1").toString());

@@ -5,28 +5,35 @@
     <name>MainWindow</name>
     <message>
         <location filename="../../mainwindow.ui" line="6"/>
+        <location filename="../../mainwindow.cpp" line="21"/>
+        <location filename="../../mainwindow.cpp" line="215"/>
         <source>Ordinary Serial Port Assistant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="37"/>
-        <location filename="../../mainwindow.cpp" line="33"/>
         <source>Refresh Serial Ports</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="42"/>
-        <location filename="../../mainwindow.cpp" line="38"/>
+        <location filename="../../mainwindow.cpp" line="40"/>
+        <location filename="../../mainwindow.cpp" line="217"/>
         <source>Open Serial Port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="70"/>
+        <location filename="../../mainwindow.cpp" line="56"/>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../mainwindow.cpp" line="128"/>
         <source>No Serial Ports</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="70"/>
+        <location filename="../../mainwindow.cpp" line="128"/>
         <source>No serial ports available.</source>
         <translation type="unfinished"></translation>
     </message>
