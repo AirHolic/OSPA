@@ -11,7 +11,7 @@ class SerialManager : public QObject
     Q_OBJECT
 
 public:
-    explicit SerialManager(QObject *parent = nullptr);
+    explicit SerialManager(const QString &identifier, QObject *parent = nullptr);
     ~SerialManager();
 
     bool connectSerialPort(const QString &portName, int baudRate, int dataBits, int parity, int stopBits, int flowControl);
@@ -20,6 +20,7 @@ public:
 
     void sendData(const QByteArray &data);
     QByteArray receiveData();
+    QString getIdentifier() const { return portIdentifier; }
 
 signals:
     void dataReceived(const QByteArray &data);
@@ -31,6 +32,7 @@ private slots:
 private:
     QSerialPort *serialPort;
     QTimer *timer;
+    QString portIdentifier;
 };
 
 #endif // SERIALMANAGER_H

@@ -21,7 +21,8 @@
 
 SerialWidget::SerialWidget(const QString &portName, QWidget *parent)
     : QWidget(parent), portName(portName),
-      serialPortManager(new SerialManager(this)), sentBytes(0), receivedBytes(0)
+      serialPortManager(new SerialManager(portName, this)), // 使用portName作为标识符
+      sentBytes(0), receivedBytes(0)
 {
     serialSettings = new QSettings("serialconfig.ini", QSettings::IniFormat, this);
     multiSendSettings = new QSettings("multisendconfig.ini", QSettings::IniFormat, this);
@@ -329,8 +330,7 @@ void SerialWidget::initConnections()
     connect(sendButton, &QPushButton::clicked, this, &SerialWidget::sendData);
     connect(searchButton, &QPushButton::clicked, this, &SerialWidget::openSearchDialog);
     connect(clearReceiveButton, &QPushButton::clicked, this, &SerialWidget::clearReceiveArea);
-    // 连接串口数据接收与错误处理信号
-    connect(serialPortManager, &SerialManager::dataReceived, this, &SerialWidget::onDataReceived);
+    // 连接错误处理信号
     connect(serialPortManager, &SerialManager::errorOccurred, this, &SerialWidget::onErrorOccurred);
     // 连接循环发送相关信号
     connect(multiCycleSendCheckBox, &QCheckBox::stateChanged, this, &SerialWidget::multiCycleTimer);
@@ -551,6 +551,10 @@ void SerialWidget::toggleConnection()
         multiCycleSendCheckBox->setChecked(false);
         enableUi(false);
 
+        // 断开所有数据接收相关的连接
+        disconnect(serialPortManager, &SerialManager::dataReceived, 
+            this, &SerialWidget::onDataReceived);
+
         serialPortManager->disconnectSerialPort();
         connectButton->setText(tr("Connect"));
         ymodemWidget->protocolEnableUI(false);
@@ -564,6 +568,12 @@ void SerialWidget::toggleConnection()
                                                  stopBitsComboBox->currentIndex() + 1,
                                                  flowControlComboBox->currentIndex()))
         {
+
+            // 重新建立数据接收连接
+            connect(serialPortManager, &SerialManager::dataReceived, 
+                this, &SerialWidget::onDataReceived,
+                Qt::UniqueConnection);  // 添加 Qt::UniqueConnection 标志
+
             connectButton->setText(tr("Disconnect"));
             enableUi(true);
             ymodemWidget->protocolEnableUI(true);
@@ -726,9 +736,13 @@ void SerialWidget::multiAutoSendData()
 
 void SerialWidget::onDataReceived(const QByteArray &data)
 {
-    receivedBytes += data.size();
-    updateStatusLabel();
-    logMessage("Recv: " + (hexReceiveCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
+    // 添加标识符检查
+    if (sender() && qobject_cast<SerialManager*>(sender())->getIdentifier() == portName)
+    {
+        receivedBytes += data.size();
+        updateStatusLabel();
+        logMessage("Recv: " + (hexReceiveCheckBox->isChecked() ? data.toHex(' ').toUpper() : data));
+    }
 }
 
 void SerialWidget::onErrorOccurred(const QString &error)

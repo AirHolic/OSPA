@@ -75,7 +75,7 @@ void SerialProtocolTransmission::protocolEnableUI(bool flag)
 
 void SerialProtocolTransmission::initConnections()
 {
-    connect(openFileButton, &QPushButton::clicked, this, &SerialProtocolTransmission::openFile);
+    //connect(openFileButton, &QPushButton::clicked, this, &SerialProtocolTransmission::openFile);
     connect(startButton, &QPushButton::clicked, this, &SerialProtocolTransmission::startYModemTransfer);
     //bug
     //connect(serialManager, &SerialManager::dataReceived, this, &SerialProtocolTransmission::protocolHexReceiveData);
