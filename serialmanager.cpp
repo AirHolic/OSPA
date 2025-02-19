@@ -7,8 +7,7 @@ SerialManager::SerialManager(const QString &identifier, QObject *parent)
 {
     serialPort = new QSerialPort(this);
     connect(serialPort, &QSerialPort::readyRead, this, [this]() {
-        QByteArray data = serialPort->readAll();
-        emit dataReceived(data);
+        onReadyRead(receiveData());
     });
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, [this]() {
