@@ -39,7 +39,7 @@ public:
     qint64 receivedBytes;
 
 signals:
-    void closeRequested(int index); // 请求关闭信号
+    //void closeRequested(int index); // 请求关闭信号
 
 protected:
     void showEvent(QShowEvent *event) override;

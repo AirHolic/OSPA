@@ -30,7 +30,8 @@ private slots:
     void openSerialPort();               // 打开串口
     void closeSerialPort(int index);     // 关闭串口
     void onTabDockRequested(int index);  // 标签页拖出为窗口
-    void onDockTabRequested(QWidget *widget); // 窗口拖入为标签页
+    // 修改槽函数参数类型：由 QWidget* 改为 QDockWidget*
+    void onDockTabRequested(QDockWidget *dockWidget); // 窗口拖入为标签页
     void switchLanguage(const QString &languageCode); // 切换语言槽函数
 
 private:

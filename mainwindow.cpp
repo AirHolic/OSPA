@@ -158,7 +158,7 @@ void MainWindow::openSerialPort()
     tabWidget->setCurrentWidget(widget);
 
     // 连接串口控件的关闭请求信号
-    connect(widget, &SerialWidget::closeRequested, this, &MainWindow::closeSerialPort);
+    //connect(widget, &SerialWidget::closeRequested, this, &MainWindow::closeSerialPort);
 }
 
 void MainWindow::closeSerialPort(int index)
@@ -172,30 +172,42 @@ void MainWindow::closeSerialPort(int index)
 
 void MainWindow::onTabDockRequested(int index)
 {
-    QWidget *widget = tabWidget->widget(index);
-    if (widget) {
-        // 创建 QDockWidget，并将标签页中的控件移动到新窗口
-        QDockWidget *dockWidget = new QDockWidget(tabWidget->tabText(index), this);
-        dockWidget->setAttribute(Qt::WA_DeleteOnClose);
-        dockWidget->setWidget(widget);
-        addDockWidget(Qt::RightDockWidgetArea, dockWidget);
-
-        // 当窗口由独立状态拖回后重新放回标签页
-        connect(dockWidget, &QDockWidget::topLevelChanged, this,
-                [this, dockWidget](bool topLevel) {
-            if (!topLevel) {
-                onDockTabRequested(dockWidget->widget());
-            }
-        });
+    // 获取标签页对应的 SerialWidget
+    SerialWidget *widget = qobject_cast<SerialWidget *>(tabWidget->widget(index));
+    if (!widget) {
+        return;
     }
+    // 保存原标签页标题
+    QString tabTitle = tabWidget->tabText(index);
+    // 从标签页中移除并更新 serialPortWidgets
+    tabWidget->removeTab(index);
+    int listIndex = serialPortWidgets.indexOf(widget);
+    if(listIndex != -1){
+        serialPortWidgets.removeAt(listIndex);
+    }
+
+    // 创建 QDockWidget，将该 widget 移入独立窗口
+    QDockWidget *dockWidget = new QDockWidget(tabTitle, this);
+    dockWidget->setAttribute(Qt::WA_DeleteOnClose);
+    dockWidget->setWidget(widget);
+    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+
+    // 当独立窗口拖拽回标签区域时重新放回标签页
+    connect(dockWidget, &QDockWidget::topLevelChanged, this,
+            [this, dockWidget](bool topLevel) {
+                if (!topLevel) {
+                    onDockTabRequested(dockWidget);
+                }
+            });
 }
 
-void MainWindow::onDockTabRequested(QWidget *widget)
+void MainWindow::onDockTabRequested(QDockWidget *dockWidget)
 {
-    QDockWidget *dockWidget = qobject_cast<QDockWidget *>(widget->parentWidget());
-    if (dockWidget) {
+    QWidget *widget = dockWidget->widget();
+    if (widget) {
         removeDockWidget(dockWidget);
         tabWidget->addTab(widget, dockWidget->windowTitle());
+        serialPortWidgets.append(qobject_cast<SerialWidget *>(widget));
         dockWidget->deleteLater();
     }
 }
