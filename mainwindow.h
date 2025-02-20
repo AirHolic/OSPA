@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QTabWidget>
 #include <QDockWidget>
+#include <QSplitter>
 #include <QList>
 #include <QTimer>
 #include "serialwidget.h"
@@ -29,22 +30,23 @@ private slots:
     void refreshSerialPorts();           // 自动刷新串口列表
     void openSerialPort();               // 打开串口
     void closeSerialPort(int index);     // 关闭串口
-    void onTabDockRequested(int index);  // 标签页拖出为窗口
-    // 修改槽函数参数类型：由 QWidget* 改为 QDockWidget*
-    void onDockTabRequested(QDockWidget *dockWidget); // 窗口拖入为标签页
+    void onTabSplitRequested(int index); // 标签页分离请求
     void switchLanguage(const QString &languageCode); // 切换语言槽函数
 
 private:
-    QTabWidget *tabWidget;              // 标签页控件
-    QComboBox *comboBoxSerialPorts;     // 串口选择下拉框
-    QList<SerialWidget *> serialPortWidgets; // 串口控件列表
-    QList<QSerialPortInfo> availablePorts;   // 可用串口列表
+    void closeSerialPortFromTab(QTabWidget *tWidget, int index);
+    void adjustSplitterSizes();          // 调整分割器大小
 
-    QAction *openAction;    // 打开串口按钮
+    QSplitter *centralSplitter;
+    QTabWidget *tabWidget;
+    QComboBox *comboBoxSerialPorts;
+    QList<SerialWidget *> serialPortWidgets;
+    QList<QSerialPortInfo> availablePorts;
 
-    LanguageManager *langManager;      // 多语言管理指针
+    QAction *openAction;
 
-    QTimer *refreshTimer; // 定时刷新串口列表
+    LanguageManager *langManager;
+    QTimer *refreshTimer;
 };
 
 #endif // MAINWINDOW_H

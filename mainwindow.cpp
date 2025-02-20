@@ -13,25 +13,31 @@
 #include <QActionGroup>
 #include <QTimer>
 #include <QToolButton>
+#include <QSplitter>
+#include <QCoreApplication>
 
 MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     : QMainWindow(parent), langManager(lm)
 {
-    // 设置窗口标题
+    // 设置窗口标题与大小
     setWindowTitle(tr("Ordinary Serial Port Assistant"));
     setMinimumSize(800, 600);
 
-    // 创建标签页控件
+    // 创建中央分割器，并将初始标签页控件添加进去
+    centralSplitter = new QSplitter(Qt::Horizontal, this);
     tabWidget = new QTabWidget(this);
-    setCentralWidget(tabWidget);
     tabWidget->setTabsClosable(true);
     tabWidget->setMovable(true);
+    centralSplitter->addWidget(tabWidget);
+    setCentralWidget(centralSplitter);
 
-    // 连接标签页关闭、双击事件
-    connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeSerialPort);
-    connect(tabWidget, &QTabWidget::tabBarDoubleClicked, this, &MainWindow::onTabDockRequested);
+    // 连接标签页的关闭与双击事件（双击时分割）
+    connect(tabWidget, &QTabWidget::tabCloseRequested, this, [this](int index){
+        closeSerialPortFromTab(tabWidget, index);
+    });
+    connect(tabWidget, &QTabWidget::tabBarDoubleClicked, this, &MainWindow::onTabSplitRequested);
 
-    // 创建统一的工具栏（整合串口操作和语言切换）
+    // 创建工具栏
     QToolBar *toolBar = new QToolBar(this);
     addToolBar(toolBar);
     toolBar->setMovable(false);
@@ -41,17 +47,17 @@ MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     connect(openAction, &QAction::triggered, this, &MainWindow::openSerialPort);
     toolBar->addAction(openAction);
 
-    // 添加串口选择下拉框
+    // 串口选择下拉框
     comboBoxSerialPorts = new QComboBox(this);
     comboBoxSerialPorts->setMinimumWidth(150);
     toolBar->addWidget(comboBoxSerialPorts);
 
-    // 在添加串口下拉框后，添加一个伸缩 spacer 推动后面的控件到最右侧
+    // 添加伸缩 spacer 使后面控件靠右
     QWidget *spacer = new QWidget(this);
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     toolBar->addWidget(spacer);
 
-    // 添加语言按钮（仅显示文本，无下拉箭头）
+    // 语言切换工具按钮
     QToolButton *languageButton = new QToolButton(this);
     languageButton->setText(tr("Language"));
     languageButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
@@ -78,13 +84,13 @@ MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     languageButton->setMenu(languageMenu);
     toolBar->addWidget(languageButton);
 
-    // 点击动作切换语言
+    // 切换语言信号
     connect(languageActionGroup, &QActionGroup::triggered, this, [this](QAction *action){
         QString code = action->data().toString();
         switchLanguage(code);
     });
 
-    // 自动定时刷新串口列表
+    // 自动刷新串口列表定时器
     refreshTimer = new QTimer(this);
     connect(refreshTimer, &QTimer::timeout, this, &MainWindow::refreshSerialPorts);
     refreshTimer->start(3000); // 每3000ms刷新一次
@@ -132,85 +138,213 @@ void MainWindow::openSerialPort()
     // 获取下拉框中选择的串口名称
     QString selectedPort = comboBoxSerialPorts->currentText();
 
-    // 检查是否已存在相同串口的标签页
-    for (int i = 0; i < tabWidget->count(); ++i) {
-        if (tabWidget->tabText(i) == selectedPort) {
-            // 切换到已存在的标签页
-            tabWidget->setCurrentIndex(i);
-            return;
+    // 检查各个 QTabWidget 中是否已存在相同串口
+    QList<QTabWidget*> tabWidgets = centralSplitter->findChildren<QTabWidget*>();
+    for(auto *tWidget : tabWidgets) {
+        for (int i = 0; i < tWidget->count(); ++i) {
+            if (tWidget->tabText(i) == selectedPort) {
+                tWidget->setCurrentIndex(i);
+                return;
+            }
         }
     }
-
-    // 检查是否已存在相同串口的独立窗口
-    for (QDockWidget *dockWidget : findChildren<QDockWidget *>()) {
-        if (dockWidget->windowTitle() == selectedPort) {
-            // 激活并聚焦到该窗口
-            dockWidget->raise();
-            dockWidget->activateWindow();
-            return;
-        }
-    }
-
-    // 创建新的串口控件
+    // 创建新的串口控件，并添加到初始标签页控件中
     SerialWidget *widget = new SerialWidget(selectedPort, this);
     tabWidget->addTab(widget, selectedPort);
     serialPortWidgets.append(widget);
     tabWidget->setCurrentWidget(widget);
-
-    // 连接串口控件的关闭请求信号
-    //connect(widget, &SerialWidget::closeRequested, this, &MainWindow::closeSerialPort);
+    // 注意：初始的 tabWidget 的关闭信号已在构造函数中连接
 }
 
 void MainWindow::closeSerialPort(int index)
 {
-    if (index >= 0 && index < tabWidget->count()) {
-        SerialWidget *widget = serialPortWidgets.takeAt(index);
-        tabWidget->removeTab(index);
-        delete widget;
-    }
+    // 保留原接口，暂时不再使用
+    closeSerialPortFromTab(tabWidget, index);
 }
 
-void MainWindow::onTabDockRequested(int index)
+void MainWindow::closeSerialPortFromTab(QTabWidget *tWidget, int index)
 {
-    // 获取标签页对应的 SerialWidget
-    SerialWidget *widget = qobject_cast<SerialWidget *>(tabWidget->widget(index));
-    if (!widget) {
+    if (index < 0 || index >= tWidget->count())
+        return;
+    
+    SerialWidget *widget = qobject_cast<SerialWidget*>(tWidget->widget(index));
+    if (!widget) return;
+
+    // 从列表中移除
+    int listIdx = serialPortWidgets.indexOf(widget);
+    if (listIdx != -1)
+        serialPortWidgets.removeAt(listIdx);
+
+    // 从标签页移除
+    tWidget->removeTab(index);
+    
+    // 删除 widget
+    widget->deleteLater();
+
+    // 特殊处理主标签区
+    if (tWidget == tabWidget && tWidget->count() == 0) {
+        // 当主标签区为空时，查找其他分割区域
+        QList<QTabWidget*> otherTabs = centralSplitter->findChildren<QTabWidget*>();
+        QTabWidget* newMainTab = nullptr;
+
+        // 找到第一个非空的分割区域设为主标签区
+        for (QTabWidget* other : otherTabs) {
+            if (other != tabWidget && other->count() > 0) {
+                // 检查该标签页是否包含有效的 SerialWidget
+                bool hasValidSerialWidget = false;
+                for(int i = 0; i < other->count(); i++) {
+                    if(qobject_cast<SerialWidget*>(other->widget(i))) {
+                        hasValidSerialWidget = true;
+                        break;
+                    }
+                }
+                if(hasValidSerialWidget) {
+                    newMainTab = other;
+                    break;
+                }
+            }
+            // else if (other == tabWidget) {
+            //     continue;
+            // }
+            // else if (other->count() == 0) {
+            //     other->setParent(nullptr);
+            //     other->deleteLater();
+            // }
+        }
+        // 如果找到合适的分割区域
+        if (newMainTab) {
+            qDebug() << "New main tab found: " << newMainTab->tabText(0);
+            // 将找到的分割区域设为主标签区
+            int oldIndex = centralSplitter->indexOf(newMainTab);
+            centralSplitter->insertWidget(0, newMainTab); // 移到第一个位置
+            delete tabWidget; // 删除原主标签区
+            tabWidget = newMainTab; // 更新主标签区指针
+
+            // 调整分割区域大小
+            QMetaObject::invokeMethod(this, [this]() {
+                adjustSplitterSizes();
+            }, Qt::QueuedConnection);
+        }
         return;
     }
-    // 保存原标签页标题
-    QString tabTitle = tabWidget->tabText(index);
-    // 从标签页中移除并更新 serialPortWidgets
-    tabWidget->removeTab(index);
-    int listIndex = serialPortWidgets.indexOf(widget);
-    if(listIndex != -1){
-        serialPortWidgets.removeAt(listIndex);
-    }
 
-    // 创建 QDockWidget，将该 widget 移入独立窗口
-    QDockWidget *dockWidget = new QDockWidget(tabTitle, this);
-    dockWidget->setAttribute(Qt::WA_DeleteOnClose);
-    dockWidget->setWidget(widget);
-    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
-
-    // 当独立窗口拖拽回标签区域时重新放回标签页
-    connect(dockWidget, &QDockWidget::topLevelChanged, this,
-            [this, dockWidget](bool topLevel) {
-                if (!topLevel) {
-                    onDockTabRequested(dockWidget);
+    // 处理其他分割区域
+    if (tWidget != tabWidget) {
+        if (tWidget->count() == 0) {
+            tWidget->setParent(nullptr);
+            tWidget->deleteLater();
+        }
+        else if (tWidget->count() == 1) {
+            QWidget* w = tWidget->widget(0);
+            QString title = tWidget->tabText(0);
+            tWidget->removeTab(0);
+            
+            tabWidget->addTab(w, title);
+            if (SerialWidget* sw = qobject_cast<SerialWidget*>(w)) {
+                if (!serialPortWidgets.contains(sw)) {
+                    serialPortWidgets.append(sw);
                 }
-            });
-}
+            }
 
-void MainWindow::onDockTabRequested(QDockWidget *dockWidget)
-{
-    QWidget *widget = dockWidget->widget();
-    if (widget) {
-        removeDockWidget(dockWidget);
-        tabWidget->addTab(widget, dockWidget->windowTitle());
-        serialPortWidgets.append(qobject_cast<SerialWidget *>(widget));
-        dockWidget->deleteLater();
+            tWidget->setParent(nullptr);
+            tWidget->deleteLater();
+        }
+
+        // 调整分割区域大小
+        QMetaObject::invokeMethod(this, [this]() {
+            adjustSplitterSizes();
+        }, Qt::QueuedConnection);
     }
 }
+
+void MainWindow::onTabSplitRequested(int index)
+{
+    QTabWidget *srcTabWidget = qobject_cast<QTabWidget*>(sender());
+    if (!srcTabWidget)
+        srcTabWidget = tabWidget;
+
+    // 只有当待分割区域内至少有 2 个标签时才进行分割操作
+    if (srcTabWidget->count() <= 1)
+        return;
+
+    if(index < 0)
+        return;
+
+    SerialWidget *widget = qobject_cast<SerialWidget*>(srcTabWidget->widget(index));
+    if (!widget)
+        return;
+    QString tabTitle = srcTabWidget->tabText(index);
+
+    // 从当前 QTabWidget 移除该标签，并更新 serialPortWidgets
+    srcTabWidget->removeTab(index);
+    int listIdx = serialPortWidgets.indexOf(widget);
+    if (listIdx != -1)
+        serialPortWidgets.removeAt(listIdx);
+
+    // 新建一个 QTabWidget作为分割区域，并设置其属性
+    QTabWidget *newTabWidget = new QTabWidget();
+    newTabWidget->setTabsClosable(true);
+    newTabWidget->setMovable(true);
+    newTabWidget->addTab(widget, tabTitle);
+    serialPortWidgets.append(widget);
+
+    // 连接新建区域的关闭与双击信号
+    connect(newTabWidget, &QTabWidget::tabCloseRequested, this, [this, newTabWidget](int idx){
+        closeSerialPortFromTab(newTabWidget, idx);
+    });
+    connect(newTabWidget, &QTabWidget::tabBarDoubleClicked, this, &MainWindow::onTabSplitRequested);
+
+    // 将新建的 QTabWidget 添加到中央分割器中
+    // 如果是从主标签区分割，添加到末尾；否则添加到源标签区域之后
+    int insertIndex = centralSplitter->indexOf(srcTabWidget) + 1;
+    if (insertIndex <= 0) insertIndex = centralSplitter->count();
+    centralSplitter->insertWidget(insertIndex, newTabWidget);
+    
+    // 调整分割区域大小
+    adjustSplitterSizes();
+}
+
+//void MainWindow::onTabDockRequested(int index)
+//{
+//    // 获取标签页对应的 SerialWidget
+//    SerialWidget *widget = qobject_cast<SerialWidget *>(tabWidget->widget(index));
+//    if (!widget) {
+//        return;
+//    }
+//    // 保存原标签页标题
+//    QString tabTitle = tabWidget->tabText(index);
+//    // 从标签页中移除并更新 serialPortWidgets
+//    tabWidget->removeTab(index);
+//    int listIndex = serialPortWidgets.indexOf(widget);
+//    if(listIndex != -1){
+//        serialPortWidgets.removeAt(listIndex);
+//    }
+
+//    // 创建 QDockWidget，将该 widget 移入独立窗口
+//    QDockWidget *dockWidget = new QDockWidget(tabTitle, this);
+//    dockWidget->setAttribute(Qt::WA_DeleteOnClose);
+//    dockWidget->setWidget(widget);
+//    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+
+//    // 当独立窗口拖拽回标签区域时重新放回标签页
+//    connect(dockWidget, &QDockWidget::topLevelChanged, this,
+//            [this, dockWidget](bool topLevel) {
+//                if (!topLevel) {
+//                    onDockTabRequested(dockWidget);
+//                }
+//            });
+//}
+
+//void MainWindow::onDockTabRequested(QDockWidget *dockWidget)
+//{
+//    QWidget *widget = dockWidget->widget();
+//    if (widget) {
+//        removeDockWidget(dockWidget);
+//        tabWidget->addTab(widget, dockWidget->windowTitle());
+//        serialPortWidgets.append(qobject_cast<SerialWidget *>(widget));
+//        dockWidget->deleteLater();
+//    }
+//}
 
 void MainWindow::switchLanguage(const QString &languageCode)
 {
@@ -225,9 +359,45 @@ void MainWindow::changeEvent(QEvent *event)
     QMainWindow::changeEvent(event);
     if (event->type() == QEvent::LanguageChange) {
         setWindowTitle(tr("Ordinary Serial Port Assistant"));
-        // 仅更新存在的控件（由于刷新按钮已移除，此处不再更新其文本）
         openAction->setText(tr("Open Serial Port"));
         
         // 如果其他控件需要更新文本，也在此添加更新代码
     }
+}
+
+void MainWindow::adjustSplitterSizes()
+{
+    int count = centralSplitter->count();
+    if (count <= 0) return;
+
+    // 移除所有大小为0的分割区域
+    for (int i = count - 1; i >= 0; --i) {
+        QWidget *widget = centralSplitter->widget(i);
+        if (widget && widget->width() == 0) {
+            widget->setParent(nullptr);
+            widget->deleteLater();
+        }
+    }
+
+    // 重新获取分割区域数量
+    count = centralSplitter->count();
+    qDebug() << "Current splitter count:" << count;
+    if (count <= 0) return;
+
+    // 计算可用宽度
+    int availableWidth = centralSplitter->width();
+    int widthPerWidget = availableWidth / count;
+
+    // 设置每个分割区域的大小
+    QList<int> sizes;
+    for (int i = 0; i < count; ++i) {
+        sizes << widthPerWidget;
+    }
+    
+    // 应用新的大小
+    centralSplitter->setSizes(sizes);
+    
+    // 强制更新布局
+    centralSplitter->updateGeometry();
+    centralSplitter->update();
 }
