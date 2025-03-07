@@ -10,6 +10,8 @@
 #include <QList>
 #include <QTimer>
 #include "serialwidget.h"
+#include "ThemeManager.h"
+#include <QToolButton>
 
 class LanguageManager; // 前向声明
 
@@ -32,10 +34,15 @@ private slots:
     void closeSerialPort(int index);     // 关闭串口
     void onTabSplitRequested(int index); // 标签页分离请求
     void switchLanguage(const QString &languageCode); // 切换语言槽函数
+    void onThemeChanged(ThemeManager::Theme theme);
+    void switchToLightTheme();
+    void switchToDarkTheme();
+    void toggleTheme();
 
 private:
     void closeSerialPortFromTab(QTabWidget *tWidget, int index);
     void adjustSplitterSizes();          // 调整分割器大小
+    void setupViewButton();              // 设置视图按钮
 
     QSplitter *centralSplitter;
     QTabWidget *tabWidget;
@@ -47,6 +54,8 @@ private:
 
     LanguageManager *langManager;
     QTimer *refreshTimer;
+    ThemeManager *m_themeManager;
+    QToolButton *viewButton;
 };
 
 #endif // MAINWINDOW_H

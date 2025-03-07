@@ -35,6 +35,11 @@ int main(int argc, char *argv[])
         qInstallMessageHandler(customMessageHandler);
         
         QApplication a(argc, argv);
+        
+        // 设置应用程序信息，用于 QSettings
+        QCoreApplication::setOrganizationName("YourOrganization");
+        QCoreApplication::setOrganizationDomain("yourdomain.com");
+        QCoreApplication::setApplicationName("OSPA");
 
         // 设置全局异常处理
         std::set_terminate([]() {

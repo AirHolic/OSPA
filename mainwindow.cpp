@@ -57,6 +57,34 @@ MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     toolBar->addWidget(spacer);
 
+    m_themeManager = new ThemeManager(this);
+
+    // 创建视图按钮
+    viewButton = new QToolButton(this);
+    viewButton->setText(tr("视图"));
+    viewButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    viewButton->setArrowType(Qt::NoArrow);
+    viewButton->setPopupMode(QToolButton::InstantPopup);
+
+    // 创建视图菜单和主题子菜单
+    QMenu *viewMenu = new QMenu(this);
+    QMenu *themeMenu = viewMenu->addMenu(tr("主题"));
+    
+    QAction *lightThemeAction = themeMenu->addAction(tr("浅色模式"));
+    connect(lightThemeAction, &QAction::triggered, this, &MainWindow::switchToLightTheme);
+    
+    QAction *darkThemeAction = themeMenu->addAction(tr("深色模式"));
+    connect(darkThemeAction, &QAction::triggered, this, &MainWindow::switchToDarkTheme);
+    
+    viewMenu->addSeparator();
+    
+    QAction *toggleThemeAction = viewMenu->addAction(tr("切换主题"));
+    toggleThemeAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_T));
+    connect(toggleThemeAction, &QAction::triggered, this, &MainWindow::toggleTheme);
+
+    viewButton->setMenu(viewMenu);
+    toolBar->addWidget(viewButton);
+
     // 语言切换工具按钮
     QToolButton *languageButton = new QToolButton(this);
     languageButton->setText(tr("Language"));
@@ -97,6 +125,11 @@ MainWindow::MainWindow(LanguageManager *lm, QWidget *parent)
 
     // 初次刷新串口列表
     refreshSerialPorts();
+    
+    connect(m_themeManager, &ThemeManager::themeChanged, this, &MainWindow::onThemeChanged);
+    m_themeManager->loadSavedTheme(); // 加载保存的主题设置
+    
+    
 }
 
 MainWindow::~MainWindow()
@@ -304,48 +337,6 @@ void MainWindow::onTabSplitRequested(int index)
     adjustSplitterSizes();
 }
 
-//void MainWindow::onTabDockRequested(int index)
-//{
-//    // 获取标签页对应的 SerialWidget
-//    SerialWidget *widget = qobject_cast<SerialWidget *>(tabWidget->widget(index));
-//    if (!widget) {
-//        return;
-//    }
-//    // 保存原标签页标题
-//    QString tabTitle = tabWidget->tabText(index);
-//    // 从标签页中移除并更新 serialPortWidgets
-//    tabWidget->removeTab(index);
-//    int listIndex = serialPortWidgets.indexOf(widget);
-//    if(listIndex != -1){
-//        serialPortWidgets.removeAt(listIndex);
-//    }
-
-//    // 创建 QDockWidget，将该 widget 移入独立窗口
-//    QDockWidget *dockWidget = new QDockWidget(tabTitle, this);
-//    dockWidget->setAttribute(Qt::WA_DeleteOnClose);
-//    dockWidget->setWidget(widget);
-//    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
-
-//    // 当独立窗口拖拽回标签区域时重新放回标签页
-//    connect(dockWidget, &QDockWidget::topLevelChanged, this,
-//            [this, dockWidget](bool topLevel) {
-//                if (!topLevel) {
-//                    onDockTabRequested(dockWidget);
-//                }
-//            });
-//}
-
-//void MainWindow::onDockTabRequested(QDockWidget *dockWidget)
-//{
-//    QWidget *widget = dockWidget->widget();
-//    if (widget) {
-//        removeDockWidget(dockWidget);
-//        tabWidget->addTab(widget, dockWidget->windowTitle());
-//        serialPortWidgets.append(qobject_cast<SerialWidget *>(widget));
-//        dockWidget->deleteLater();
-//    }
-//}
-
 void MainWindow::switchLanguage(const QString &languageCode)
 {
     if (langManager) {
@@ -400,4 +391,65 @@ void MainWindow::adjustSplitterSizes()
     // 强制更新布局
     centralSplitter->updateGeometry();
     centralSplitter->update();
+}
+
+void MainWindow::setupViewButton()
+{
+    // 删除原来的菜单栏中的视图菜单
+
+    // 创建视图工具按钮
+    QToolButton *viewButton = new QToolButton(this);
+    viewButton->setText(tr("视图"));
+    viewButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    viewButton->setArrowType(Qt::NoArrow);
+    viewButton->setPopupMode(QToolButton::InstantPopup);
+
+    // 创建视图菜单和主题子菜单
+    QMenu *viewMenu = new QMenu(this);
+    QMenu *themeMenu = viewMenu->addMenu(tr("主题"));
+    
+    QAction *lightThemeAction = themeMenu->addAction(tr("浅色模式"));
+    connect(lightThemeAction, &QAction::triggered, this, &MainWindow::switchToLightTheme);
+    
+    QAction *darkThemeAction = themeMenu->addAction(tr("深色模式"));
+    connect(darkThemeAction, &QAction::triggered, this, &MainWindow::switchToDarkTheme);
+    
+    viewMenu->addSeparator();
+    
+    QAction *toggleThemeAction = viewMenu->addAction(tr("切换主题"));
+    toggleThemeAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_T));
+    connect(toggleThemeAction, &QAction::triggered, this, &MainWindow::toggleTheme);
+
+    viewButton->setMenu(viewMenu);
+}
+
+void MainWindow::onThemeChanged(ThemeManager::Theme theme)
+{
+    Q_UNUSED(theme);
+    // 可以在这里处理主题变更后的任何特定UI更新
+}
+
+
+void MainWindow::switchToLightTheme()
+{
+    if (m_themeManager) {
+        qDebug() << "切换到浅色主题";
+        m_themeManager->applyTheme(ThemeManager::LightTheme);
+    }
+}
+
+void MainWindow::switchToDarkTheme()
+{
+    if (m_themeManager) {
+        qDebug() << "切换到深色主题";
+        m_themeManager->applyTheme(ThemeManager::DarkTheme);
+    }
+}
+
+void MainWindow::toggleTheme()
+{
+    if (m_themeManager) {
+        qDebug() << "切换主题，当前主题:" << (m_themeManager->currentTheme() == ThemeManager::LightTheme ? "浅色" : "深色");
+        m_themeManager->toggleTheme();
+    }
 }
