@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "serialwidget.h"
-#include "LanguageManager.h"
+#include "languagemanager.h"
 
 #include <QToolBar>
 #include <QMessageBox>

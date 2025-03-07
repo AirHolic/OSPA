@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "mainwindow.h"
-#include "LanguageManager.h"
+#include "languagemanager.h"
 #include <QDebug>
 #include <exception>
 #include <QMessageBox>

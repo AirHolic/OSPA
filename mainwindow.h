@@ -10,7 +10,7 @@
 #include <QList>
 #include <QTimer>
 #include "serialwidget.h"
-#include "ThemeManager.h"
+#include "thememanager.h"
 #include <QToolButton>
 
 class LanguageManager; // 前向声明

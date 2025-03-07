@@ -1,4 +1,4 @@
-#include "LanguageManager.h"
+#include "languagemanager.h"
 #include <QCoreApplication>
 #include <QDebug>
 
